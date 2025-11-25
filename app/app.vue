@@ -21,11 +21,6 @@ useSeoMeta({
 
 <template>
   <UApp>
-    <UBanner
-      variant="info"
-      class="justify-center"
-      title="🚧 FRCTools Orders is currently in beta!"
-    />
 
     <UHeader>
       <template #left>
