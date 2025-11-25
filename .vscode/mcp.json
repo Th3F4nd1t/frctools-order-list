@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"my-mcp-server-77f9a64e": {
+			"url": "https://mcp.chonkie.ai/better-auth/better-auth-builder/mcp",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}

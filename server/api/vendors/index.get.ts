@@ -1,0 +1,17 @@
+import type { Fetcher } from '@cloudflare/workers-types'
+
+export default defineEventHandler(async (event) => {
+  const fetchFn = !import.meta.dev
+    ? (event.context.cloudflare.env.VPC_SERVICE as Fetcher).fetch.bind(
+        event.context.cloudflare.env.VPC_SERVICE
+      )
+    : fetch
+  const url = getQuery(event).url as string
+  if (!url) {
+    throw createError({ statusCode: 400, statusMessage: 'URL is required' })
+  }
+  const fetchUrl = new URL('http://localhost:3434')
+  fetchUrl.searchParams.set('url', url)
+
+  return fetchFn(fetchUrl.toString(), { headers: getHeaders(event) })
+})

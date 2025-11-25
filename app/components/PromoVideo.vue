@@ -1,0 +1,25 @@
+<template>
+  <div class="relative">
+    <UPageCard
+      variant="subtle"
+      class="rounded-2xl"
+    >
+      <video
+        class="rounded-xl"
+        preload="none"
+        poster="https://res.cloudinary.com/grahamsh/video/upload/v1762789167/cursorful-video-1762789057911_ie1ghb.jpg"
+        :controls="false"
+        autoplay="true"
+        muted
+        loop="true"
+      ><source
+        src="https://res.cloudinary.com/grahamsh/video/upload/v1762789167/cursorful-video-1762789057911_ie1ghb.webm"
+        type="video/webm"
+      ><source
+        src="https://res.cloudinary.com/grahamsh/video/upload/v1762789167/cursorful-video-1762789057911_ie1ghb.mp4"
+        type="video/mp4"
+      >
+      </video>
+    </UPageCard>
+  </div>
+</template>

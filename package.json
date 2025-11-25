@@ -1,0 +1,47 @@
+{
+  "name": "orderr",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20251111.0",
+    "@iconify-json/lucide": "^1.2.73",
+    "@iconify-json/simple-icons": "^1.2.58",
+    "@nuxt/ui": "^4.1.0",
+    "@nuxtjs/plausible": "2.0.1",
+    "@react-email/render": "^2.0.0",
+    "@tanstack/vue-query": "^5.90.7",
+    "@vitejs/plugin-vue": "^6.0.2",
+    "@vue-email/components": "^0.0.21",
+    "@vue-email/render": "^0.0.9",
+    "better-auth": "^1.4.0",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.44.7",
+    "linkedom": "^0.18.12",
+    "nitro-cloudflare-dev": "^0.2.2",
+    "nitropack": "^2.12.9",
+    "nuxt": "^4.2.1",
+    "pg": "^8.16.3",
+    "resend": "^6.4.2",
+    "wrangler": "^4.47.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.10.0",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "^0.31.6",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.3"
+  },
+  "resolutions": {
+    "unimport": "4.1.1"
+  }
+}
