@@ -9,5 +9,8 @@
   "devDependencies": {
     "h3": "^1.15.4",
     "nitropack": "^2.12.4"
+  },
+  "dependencies": {
+    "scule": "^1.3.0"
   }
 }

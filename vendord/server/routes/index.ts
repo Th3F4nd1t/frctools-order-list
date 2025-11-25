@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import parse from "../../../server/utils/set-cookie-parser";
 import { parseHTML } from "linkedom";
 import { createError, eventHandler, getHeaders, getQuery } from "h3";
-
+import { titleCase } from "scule";
 const querySchema = z.object({
   url: z.string().trim().min(1, "URL is required").url("Enter a valid URL"),
 });
@@ -41,130 +41,133 @@ export default eventHandler(async (event) => {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36";
 
   if (!vendor) {
-      const genericRes = await fetch(url, {
-        headers: {
-          "User-Agent": headerOrDefault("User-Agent") || defaultUserAgent,
-          "Accept-Language": headerOrDefault("Accept-Language"),
-          "Accept-Encoding": headerOrDefault("Accept-Encoding"),
-          Accept:
-            headerOrDefault("Accept") || "text/html,application/xhtml+xml",
-        },
+    const genericRes = await fetch(url, {
+      headers: {
+        "User-Agent": headerOrDefault("User-Agent") || defaultUserAgent,
+        "Accept-Language": headerOrDefault("Accept-Language"),
+        "Accept-Encoding": headerOrDefault("Accept-Encoding"),
+        Accept: headerOrDefault("Accept") || "text/html,application/xhtml+xml",
+      },
+    });
+    if (!genericRes.ok) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Product not found on vendor site",
       });
-      if (!genericRes.ok) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: "Product not found on vendor site",
-        });
-      }
-      const html = await genericRes.text();
-      const { document } = parseHTML(html);
+    }
+    const html = await genericRes.text();
+    const { document } = parseHTML(html);
 
-      const getMetaContent = (selectors: string[]) => {
-        for (const selector of selectors) {
-          const el = document.querySelector(selector);
-          if (!el) {
-            continue;
-          }
-          const attrContent =
-            el.getAttribute("content") ?? el.getAttribute("value");
-          const raw = attrContent ?? el.textContent;
-          if (raw && raw.trim()) {
-            return raw.trim();
-          }
+    const getMetaContent = (selectors: string[]) => {
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (!el) {
+          continue;
         }
+        const attrContent =
+          el.getAttribute("content") ?? el.getAttribute("value");
+        const raw = attrContent ?? el.textContent;
+        if (raw && raw.trim()) {
+          return raw.trim();
+        }
+      }
+      return undefined;
+    };
+
+    const parsePriceFromString = (value?: string) => {
+      if (!value) {
         return undefined;
-      };
-
-      const parsePriceFromString = (value?: string) => {
-        if (!value) {
-          return undefined;
-        }
-        const normalized = value.replace(/[^0-9.,]/g, "");
-        if (!normalized) {
-          return undefined;
-        }
-        const hasDot = normalized.includes(".");
-        const hasComma = normalized.includes(",");
-        if (hasComma && !hasDot) {
-          return Number(normalized.replace(/,/g, "."));
-        }
-        return Number(normalized.replace(/,/g, ""));
-      };
-
-      const title =
-        getMetaContent([
-          'meta[property="og:title"]',
-          'meta[name="twitter:title"]',
-          'meta[name="title"]',
-          "title",
-          "h1",
-        ]) || urlObj.hostname;
-      const description = getMetaContent([
-        'meta[property="og:description"]',
-        'meta[name="description"]',
-        'meta[name="twitter:description"]',
-      ]);
-      const imageUrl = getMetaContent([
-        'meta[property="og:image"]',
-        'meta[name="twitter:image"]',
-        'meta[itemprop="image"]',
-      ]);
-      const priceString = getMetaContent([
-        'meta[property="product:price:amount"]',
-        'meta[property="og:price:amount"]',
-        'meta[itemprop="price"]',
-        '[itemprop="price"]',
-        ".price",
-      ]);
-      const currency = getMetaContent([
-        'meta[property="product:price:currency"]',
-        'meta[itemprop="priceCurrency"]',
-        'meta[name="currency"]',
-      ]);
-      const priceValue = parsePriceFromString(priceString);
-
-      const product: {
-        title: string;
-        description?: string;
-        image?: string;
-        price?: number;
-        currency?: string;
-        variants?: Array<{ id: string; title: string; price?: number }>;
-      } = { title };
-      if (description) {
-        product.description = description;
       }
-      if (imageUrl) {
-        product.image = imageUrl;
+      const normalized = value.replace(/[^0-9.,]/g, "");
+      if (!normalized) {
+        return undefined;
       }
-      if (priceValue !== undefined) {
-        product.price = priceValue;
+      const hasDot = normalized.includes(".");
+      const hasComma = normalized.includes(",");
+      if (hasComma && !hasDot) {
+        return Number(normalized.replace(/,/g, "."));
       }
-      if (currency) {
-        product.currency = currency;
-      }
-      const variants =
-        priceValue !== undefined || variantId
-          ? [
-              {
-                id: variantId || "default",
-                title: "Default",
-                price: priceValue,
-              },
-            ]
-          : [];
-      if (variants.length) {
-        product.variants = variants;
-      }
+      return Number(normalized.replace(/,/g, ""));
+    };
 
-      return {
-        vendor,
-        productData: {
-          product,
-        },
-        variantId,
-      };
+    const title =
+      getMetaContent([
+        'meta[property="og:title"]',
+        'meta[name="twitter:title"]',
+        'meta[name="title"]',
+        "title",
+        "h1",
+      ]) || urlObj.hostname;
+    const description = getMetaContent([
+      'meta[property="og:description"]',
+      'meta[name="description"]',
+      'meta[name="twitter:description"]',
+    ]);
+    const imageUrl = getMetaContent([
+      'meta[property="og:image"]',
+      'meta[name="twitter:image"]',
+      'meta[itemprop="image"]',
+    ]);
+    const priceString = getMetaContent([
+      'meta[property="product:price:amount"]',
+      'meta[property="og:price:amount"]',
+      'meta[itemprop="price"]',
+      '[itemprop="price"]',
+      ".price",
+    ]);
+    const currency = getMetaContent([
+      'meta[property="product:price:currency"]',
+      'meta[itemprop="priceCurrency"]',
+      'meta[name="currency"]',
+    ]);
+    const priceValue = parsePriceFromString(priceString);
 
+    const product: {
+      title: string;
+      description?: string;
+      image?: string;
+      price?: number;
+      currency?: string;
+      variants?: Array<{ id: string; title: string; price?: number }>;
+    } = { title };
+    if (description) {
+      product.description = description;
+    }
+    if (imageUrl) {
+      product.image = imageUrl;
+    }
+    if (priceValue !== undefined) {
+      product.price = priceValue;
+    }
+    if (currency) {
+      product.currency = currency;
+    }
+    const variants =
+      priceValue !== undefined || variantId
+        ? [
+            {
+              id: variantId || "default",
+              title: "Default",
+              price: priceValue,
+            },
+          ]
+        : [];
+    if (variants.length) {
+      product.variants = variants;
+    }
+
+    return {
+      vendor: {
+        id: urlObj.hostname.split(".").slice(0, -1).join("."),
+        name: titleCase(urlObj.hostname.split(".").slice(0, -1).join(".")),
+        hostname: urlObj.hostname,
+        type: "generic",
+      },
+      productData: {
+        product,
+      },
+      variantId,
+    };
   }
   if (vendor.type == "shopify") {
     // strip collections from path
