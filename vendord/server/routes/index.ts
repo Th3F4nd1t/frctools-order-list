@@ -28,6 +28,17 @@ export default eventHandler(async (event) => {
   const vendor = await useDB().query.vendors.findFirst({
     where: eq(vendors.hostname, urlObj.hostname),
   });
+  const requestHeaders = getHeaders(event);
+  const headerOrDefault = (name: string) => {
+    const lowerName = name.toLowerCase();
+    const raw = requestHeaders[name] ?? requestHeaders[lowerName];
+    if (Array.isArray(raw)) {
+      return raw.join(", ");
+    }
+    return raw ?? "";
+  };
+  const defaultUserAgent =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36";
 
   if (!vendor) {
       const genericRes = await fetch(url, {
@@ -155,17 +166,6 @@ export default eventHandler(async (event) => {
       };
 
   }
-  const requestHeaders = getHeaders(event);
-  const headerOrDefault = (name: string) => {
-    const lowerName = name.toLowerCase();
-    const raw = requestHeaders[name] ?? requestHeaders[lowerName];
-    if (Array.isArray(raw)) {
-      return raw.join(", ");
-    }
-    return raw ?? "";
-  };
-  const defaultUserAgent =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36";
   if (vendor.type == "shopify") {
     // strip collections from path
     const pathParts = urlObj.pathname.split("/").filter(Boolean);
