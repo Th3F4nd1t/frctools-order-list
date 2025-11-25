@@ -1,105 +1,115 @@
-// look up vendors by url
-import { z } from 'zod'
-import { useDB } from '../../../server/utils/db'
-import { vendors } from '../../../server/utils/schema'
-import { eq } from 'drizzle-orm'
-import parse from '../../../server/utils/set-cookie-parser'
-import { parseHTML } from 'linkedom'
-import { createError, eventHandler, getHeaders, getQuery } from 'h3'
+import { z } from "zod";
+import { useDB } from "../../../server/utils/db";
+import { vendors } from "../../../server/utils/schema";
+import { eq } from "drizzle-orm";
+import parse from "../../../server/utils/set-cookie-parser";
+import { parseHTML } from "linkedom";
+import { createError, eventHandler, getHeaders, getQuery } from "h3";
 
 const querySchema = z.object({
-  url: z.string().trim().min(1, 'URL is required').url('Enter a valid URL')
-})
+  url: z.string().trim().min(1, "URL is required").url("Enter a valid URL"),
+});
 
 export default eventHandler(async (event) => {
-  const rawQuery = getQuery(event)
-  const parsed = querySchema.safeParse(rawQuery)
+  const rawQuery = getQuery(event);
+  const parsed = querySchema.safeParse(rawQuery);
   if (!parsed.success) {
     throw createError({
       statusCode: 400,
       statusMessage:
-        parsed.error.flatten().formErrors.join(', ') || 'Invalid query',
-      data: parsed.error.flatten().fieldErrors
-    })
+        parsed.error.flatten().formErrors.join(", ") || "Invalid query",
+      data: parsed.error.flatten().fieldErrors,
+    });
   }
 
-  const { url } = parsed.data
-  const urlObj = new URL(url)
-  const variantId = urlObj.searchParams.get('variant') ?? null
+  const { url } = parsed.data;
+  const urlObj = new URL(url);
+  const variantId = urlObj.searchParams.get("variant") ?? null;
   const vendor = await useDB().query.vendors.findFirst({
-    where: eq(vendors.hostname, urlObj.hostname)
-  })
+    where: eq(vendors.hostname, urlObj.hostname),
+  });
 
   if (!vendor) {
-    throw createError({ statusCode: 404, statusMessage: 'Vendor not found' })
+    throw createError({ statusCode: 404, statusMessage: "Vendor not found" });
   }
-  if (vendor.type == 'shopify') {
+  const requestHeaders = getHeaders(event);
+  const headerOrDefault = (name: string) => {
+    const lowerName = name.toLowerCase();
+    const raw = requestHeaders[name] ?? requestHeaders[lowerName];
+    if (Array.isArray(raw)) {
+      return raw.join(", ");
+    }
+    return raw ?? "";
+  };
+  const defaultUserAgent =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36";
+  if (vendor.type == "shopify") {
     // strip collections from path
-    const pathParts = urlObj.pathname.split('/').filter(Boolean)
-    const productIndex = pathParts.indexOf('products')
-    pathParts.splice(0, productIndex)
-    const productPath = pathParts.join('/')
+    const pathParts = urlObj.pathname.split("/").filter(Boolean);
+    const productIndex = pathParts.indexOf("products");
+    pathParts.splice(0, productIndex);
+    const productPath = pathParts.join("/");
 
-    const expectedPrefix = 'products/'
+    const expectedPrefix = "products/";
     // pull product.json from shopify
     if (productPath.startsWith(expectedPrefix)) {
-      const productHandle = productPath.slice(expectedPrefix.length)
-      const productJsonUrl = `${urlObj.origin}/products/${productHandle}.json`
+      const productHandle = productPath.slice(expectedPrefix.length);
+      const productJsonUrl = `${urlObj.origin}/products/${productHandle}.json`;
 
-      const res = await fetch(productJsonUrl)
+      const res = await fetch(productJsonUrl);
       if (!res.ok) {
         throw createError({
           statusCode: 404,
-          statusMessage: 'Product not found on vendor site'
-        })
+          statusMessage: "Product not found on vendor site",
+        });
       }
-      const productData = await res.json()
+      const productData = await res.json();
       return {
         vendor,
         productData,
-        variantId
-      }
+        variantId,
+      };
     }
   }
-  if (vendor.type == 'bigcommerce') {
+  if (vendor.type == "bigcommerce") {
     const res = await fetch(url, {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-      }
-    })
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+      },
+    });
     if (!res.ok) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Product not found on vendor site'
-      })
+        statusMessage: "Product not found on vendor site",
+      });
     }
-    const html = await res.text()
-    const tokenMatch = html.match(/"graphQLToken\\":\\"([^"]+)\\"/)
+    const html = await res.text();
+    const tokenMatch = html.match(/"graphQLToken\\":\\"([^"]+)\\"/);
     //                                     <input type="hidden" name="product_id" value="626"/>
 
     const productIdMatch = html.match(
-      /<input type="hidden" name="product_id" value="(\d+)"/
-    )
+      /<input type="hidden" name="product_id" value="(\d+)"/,
+    );
 
     if (!tokenMatch || !productIdMatch) {
       throw createError({
         statusCode: 500,
         statusMessage:
-          'Could not extract storefront token or product ID from page'
-      })
+          "Could not extract storefront token or product ID from page",
+      });
     }
-    const setCookies = res.headers.get('set-cookie') || ''
-    const cookies = parse(setCookies)
-    const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ')
+    const setCookies = res.headers.get("set-cookie") || "";
+    const cookies = parse(setCookies);
+    const cookieString = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
 
-    const STOREFRONT_TOKEN = tokenMatch[1]
+    const STOREFRONT_TOKEN = tokenMatch[1];
     const graphQlRes = await fetch(`https://${vendor.hostname}/graphql`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${STOREFRONT_TOKEN}`,
-        'Cookie': cookieString
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STOREFRONT_TOKEN}`,
+        Cookie: cookieString,
       },
       body: JSON.stringify({
         /* graphql look for product with path */
@@ -209,19 +219,19 @@ export default eventHandler(async (event) => {
 `,
 
         variables: {
-          path: urlObj.pathname
-        }
-      })
-    })
-    const graphQlData = await graphQlRes.json()
+          path: urlObj.pathname,
+        },
+      }),
+    });
+    const graphQlData = await graphQlRes.json();
 
     if (!graphQlRes.ok) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Product not found on vendor site'
-      })
+        statusMessage: "Product not found on vendor site",
+      });
     }
-    const p = graphQlData.data.site.product
+    const p = graphQlData.data.site.product;
 
     return {
       vendor,
@@ -236,53 +246,51 @@ export default eventHandler(async (event) => {
             id: edge.node.sku,
             title:
               edge?.node.productOptions.edges[0]?.node.values.edges[0]?.node
-                .label
-          }))
-        }
+                .label,
+          })),
+        },
       },
-      variantId
-    }
+      variantId,
+    };
   }
-  if (vendor.type == 'amazon') {
+  if (vendor.type == "amazon") {
     // fetch url
     // pass along user agent, accept language, accept encoding headers, accept headers
-    const requestHeaders = getHeaders(event)
-
     const res = await fetch(url, {
       headers: {
-        'User-Agent': requestHeaders['User-Agent'] || '',
-        'Accept-Language': requestHeaders['Accept-Language'] || '',
-        'Accept-Encoding': requestHeaders['Accept-Encoding'] || '',
-        'Accept': requestHeaders['Accept'] || ''
-      }
-    })
+        "User-Agent": headerOrDefault("User-Agent") || defaultUserAgent,
+        "Accept-Language": headerOrDefault("Accept-Language"),
+        "Accept-Encoding": headerOrDefault("Accept-Encoding"),
+        Accept: headerOrDefault("Accept"),
+      },
+    });
     if (!res.ok) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Product not found on vendor site'
-      })
+        statusMessage: "Product not found on vendor site",
+      });
     }
-    const html = await res.text()
-    const { document } = parseHTML(html)
+    const html = await res.text();
+    const { document } = parseHTML(html);
     // amazon uses a lot of dynamic content, so we need to parse the html
     // and look for the product title and price
-    const titleElement = document.querySelector('#productTitle')
-    const priceWhole = document.querySelector('.a-price-whole')
-    const priceFraction = document.querySelector('.a-price-fraction')
+    const titleElement = document.querySelector("#productTitle");
+    const priceWhole = document.querySelector(".a-price-whole");
+    const priceFraction = document.querySelector(".a-price-fraction");
     if (!titleElement || !priceWhole) {
       throw createError({
         statusCode: 500,
-        statusMessage: 'Could not extract product data from page'
-      })
+        statusMessage: "Could not extract product data from page",
+      });
     }
-    const title = titleElement.textContent.trim()
+    const title = titleElement.textContent.trim();
     const price = parseFloat(
-      priceWhole.textContent.replace(/[^\d]/g, '')
-      + '.'
-      + (priceFraction
-        ? priceFraction.textContent.replace(/[^\d]/g, '')
-        : '00')
-    )
+      priceWhole.textContent.replace(/[^\d]/g, "") +
+        "." +
+        (priceFraction
+          ? priceFraction.textContent.replace(/[^\d]/g, "")
+          : "00"),
+    );
 
     return {
       vendor,
@@ -291,17 +299,137 @@ export default eventHandler(async (event) => {
           title,
           variants: [
             {
-              id: variantId || 'default',
-              title: 'Default',
-              price
-            }
+              id: variantId || "default",
+              title: "Default",
+              price,
+            },
           ],
-          price
-        }
+          price,
+        },
       },
-      variantId
+      variantId,
+    };
+  }
+  const genericRes = await fetch(url, {
+    headers: {
+      "User-Agent": headerOrDefault("User-Agent") || defaultUserAgent,
+      "Accept-Language": headerOrDefault("Accept-Language"),
+      "Accept-Encoding": headerOrDefault("Accept-Encoding"),
+      Accept: headerOrDefault("Accept") || "text/html,application/xhtml+xml",
+    },
+  });
+  if (!genericRes.ok) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Product not found on vendor site",
+    });
+  }
+  const html = await genericRes.text();
+  const { document } = parseHTML(html);
+
+  const getMetaContent = (selectors: string[]) => {
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (!el) {
+        continue;
+      }
+      const attrContent =
+        el.getAttribute("content") ?? el.getAttribute("value");
+      const raw = attrContent ?? el.textContent;
+      if (raw && raw.trim()) {
+        return raw.trim();
+      }
     }
+    return undefined;
+  };
+
+  const parsePriceFromString = (value?: string) => {
+    if (!value) {
+      return undefined;
+    }
+    const normalized = value.replace(/[^0-9.,]/g, "");
+    if (!normalized) {
+      return undefined;
+    }
+    const hasDot = normalized.includes(".");
+    const hasComma = normalized.includes(",");
+    if (hasComma && !hasDot) {
+      return Number(normalized.replace(/,/g, "."));
+    }
+    return Number(normalized.replace(/,/g, ""));
+  };
+
+  const title =
+    getMetaContent([
+      'meta[property="og:title"]',
+      'meta[name="twitter:title"]',
+      'meta[name="title"]',
+      "title",
+      "h1",
+    ]) || urlObj.hostname;
+  const description = getMetaContent([
+    'meta[property="og:description"]',
+    'meta[name="description"]',
+    'meta[name="twitter:description"]',
+  ]);
+  const imageUrl = getMetaContent([
+    'meta[property="og:image"]',
+    'meta[name="twitter:image"]',
+    'meta[itemprop="image"]',
+  ]);
+  const priceString = getMetaContent([
+    'meta[property="product:price:amount"]',
+    'meta[property="og:price:amount"]',
+    'meta[itemprop="price"]',
+    '[itemprop="price"]',
+    ".price",
+  ]);
+  const currency = getMetaContent([
+    'meta[property="product:price:currency"]',
+    'meta[itemprop="priceCurrency"]',
+    'meta[name="currency"]',
+  ]);
+  const priceValue = parsePriceFromString(priceString);
+
+  const product: {
+    title: string;
+    description?: string;
+    image?: string;
+    price?: number;
+    currency?: string;
+    variants?: Array<{ id: string; title: string; price?: number }>;
+  } = { title };
+  if (description) {
+    product.description = description;
+  }
+  if (imageUrl) {
+    product.image = imageUrl;
+  }
+  if (priceValue !== undefined) {
+    product.price = priceValue;
+  }
+  if (currency) {
+    product.currency = currency;
+  }
+  const variants =
+    priceValue !== undefined || variantId
+      ? [
+          {
+            id: variantId || "default",
+            title: "Default",
+            price: priceValue,
+          },
+        ]
+      : [];
+  if (variants.length) {
+    product.variants = variants;
   }
 
-  throw createError({ statusCode: 400, statusMessage: 'Unsupported vendor' })
-})
+  return {
+    vendor,
+    productData: {
+      product,
+    },
+    variantId,
+  };
+});
