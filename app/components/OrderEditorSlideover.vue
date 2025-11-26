@@ -415,7 +415,7 @@ function handleSubmit(event: FormSubmitEvent<OrderFormSchema>) {
     description: event.data.description ?? undefined,
     vendorId: event.data.vendorId ?? null,
     unitPriceCents: event.data.unitPrice
-      ? Number(event.data.unitPrice) * 100
+      ? Math.ceil(Number(event.data.unitPrice) * 100)
       : undefined,
     variantId: event.data.variantId ?? undefined,
     variantTitle: event.data.variantTitle ?? undefined,
