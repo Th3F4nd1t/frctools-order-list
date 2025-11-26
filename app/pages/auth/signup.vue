@@ -14,7 +14,7 @@
 
       <template #footer>
         By signing up, you agree to our
-        <ULink to="/" class="text-primary font-medium">Terms of Service</ULink>.
+        <ULink to="/privacy" class="text-primary font-medium">Privacy Policy</ULink>.
       </template>
     </UAuthForm>
   </div>
