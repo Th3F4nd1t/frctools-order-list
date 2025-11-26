@@ -5,7 +5,8 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/ui',
     'nitro-cloudflare-dev',
-    '@nuxtjs/plausible'
+    '@nuxtjs/plausible',
+    '@nuxtjs/mdc'
   ],
 
   devtools: {
