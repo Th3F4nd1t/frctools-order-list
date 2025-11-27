@@ -1,14 +1,15 @@
 import { defineEventHandler } from 'h3'
 import { eq, desc, sql } from 'drizzle-orm'
 import { useDB } from '../../utils/db'
-import { orders, vendors } from '../../utils/schema'
+import { orders, vendors, orderTags, tags } from '../../utils/schema'
 import { user as authUser } from '../../utils/auth-schema'
 import { requireOrganizationContext } from '../../utils/session'
 
 export default defineEventHandler(async (event) => {
   const { organizationId } = await requireOrganizationContext(event)
+  const db = useDB()
 
-  const orderRecords = await useDB()
+  const orderRecords = await db
     .select({
       id: orders.id,
       organizationId: orders.organizationId,
@@ -38,7 +39,37 @@ export default defineEventHandler(async (event) => {
     .where(eq(orders.organizationId, organizationId))
     .orderBy(desc(orders.createdAt))
 
+  const orderIds = orderRecords.map(o => o.id)
+  const orderTagsData
+    = orderIds.length > 0
+      ? await db
+          .select({
+            orderId: orderTags.orderId,
+            tagId: tags.id,
+            tagName: tags.name,
+            tagColor: tags.color
+          })
+          .from(orderTags)
+          .innerJoin(tags, eq(orderTags.tagId, tags.id))
+          .where(sql`${orderTags.orderId} IN ${orderIds}`)
+      : []
+
+  const tagsByOrder = new Map<
+    string,
+    Array<{ id: string, name: string, color: string }>
+  >()
+  for (const ot of orderTagsData) {
+    const existing = tagsByOrder.get(ot.orderId) || []
+    existing.push({ id: ot.tagId, name: ot.tagName, color: ot.tagColor })
+    tagsByOrder.set(ot.orderId, existing)
+  }
+
+  const ordersWithTags = orderRecords.map(order => ({
+    ...order,
+    tags: tagsByOrder.get(order.id) || []
+  }))
+
   return {
-    orders: orderRecords
+    orders: ordersWithTags
   }
 })

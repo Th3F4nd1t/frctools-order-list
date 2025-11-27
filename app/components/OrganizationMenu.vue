@@ -4,7 +4,7 @@ import {
   reactive,
   ref,
   watch,
-  onMounted,
+  onMounted
 } from 'vue'
 import { z } from 'zod'
 import type { DropdownMenuItem, FormSubmitEvent } from '#ui/types'

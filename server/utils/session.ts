@@ -26,7 +26,6 @@ export async function requireOrganizationContext(
   }
 
   const { session, user } = sessionResult
-  console.log('session', session)
   const activeOrganizationId = session.activeOrganizationId ?? null
   if (!activeOrganizationId) {
     throw createError({

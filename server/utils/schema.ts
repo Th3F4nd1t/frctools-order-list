@@ -1,4 +1,12 @@
-import { pgEnum, pgTable, text, timestamp, integer } from 'drizzle-orm/pg-core'
+import {
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  integer,
+  primaryKey
+} from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 import { organization, user } from './auth-schema'
 
 export const vendors = pgTable('vendors', {
@@ -7,6 +15,16 @@ export const vendors = pgTable('vendors', {
   type: text('type').notNull().$type<'shopify' | 'bigcommerce' | 'amazon'>(),
   config: text('config').notNull(),
   hostname: text('hostname').notNull()
+})
+
+export const tags = pgTable('tags', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  color: text('color').notNull().default('#6366f1'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
 })
 
 export const orderStatusEnum = pgEnum('order_status', [
@@ -41,3 +59,39 @@ export const orders = pgTable('orders', {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull()
 })
+
+export const orderTags = pgTable(
+  'order_tags',
+  {
+    orderId: text('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    tagId: text('tag_id')
+      .notNull()
+      .references(() => tags.id, { onDelete: 'cascade' })
+  },
+  table => [primaryKey({ columns: [table.orderId, table.tagId] })]
+)
+
+export const tagsRelations = relations(tags, ({ one, many }) => ({
+  organization: one(organization, {
+    fields: [tags.organizationId],
+    references: [organization.id]
+  }),
+  orderTags: many(orderTags)
+}))
+
+export const orderTagsRelations = relations(orderTags, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderTags.orderId],
+    references: [orders.id]
+  }),
+  tag: one(tags, {
+    fields: [orderTags.tagId],
+    references: [tags.id]
+  })
+}))
+
+export const ordersRelations = relations(orders, ({ many }) => ({
+  orderTags: many(orderTags)
+}))

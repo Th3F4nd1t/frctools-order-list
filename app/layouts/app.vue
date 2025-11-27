@@ -36,6 +36,4 @@ const hasOrganization = computed(() => {
   if (!auth.user.value || !auth.session.value) return false
   return Boolean(organization.value)
 })
-
-
 </script>

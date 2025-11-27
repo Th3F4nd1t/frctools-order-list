@@ -1,8 +1,8 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDB } from '../../utils/db'
-import { orders, vendors } from '../../utils/schema'
+import { orders, vendors, orderTags, tags } from '../../utils/schema'
 import { user as authUser } from '../../utils/auth-schema'
 import { requireOrganizationContext } from '../../utils/session'
 
@@ -58,7 +58,8 @@ const updateOrderSchema = z
       .optional()
       .or(z.literal(''))
       .or(z.null())
-      .transform(value => (value ? value : null))
+      .transform(value => (value ? value : null)),
+    tagIds: z.array(z.string()).optional()
   })
   .refine(data => Object.keys(data).length > 0, {
     message: 'No updates provided'
@@ -174,9 +175,48 @@ export default defineEventHandler(async (event) => {
       updates.arrivedAt = null
     }
   }
+
+  let tagsUpdated = false
+  if (payload.tagIds !== undefined) {
+    await db.delete(orderTags).where(eq(orderTags.orderId, id))
+
+    if (payload.tagIds.length > 0) {
+      const validTags = await db
+        .select({ id: tags.id })
+        .from(tags)
+        .where(
+          and(
+            eq(tags.organizationId, organizationId),
+            inArray(tags.id, payload.tagIds)
+          )
+        )
+
+      const validTagIds = validTags.map(t => t.id)
+      if (validTagIds.length > 0) {
+        await db.insert(orderTags).values(
+          validTagIds.map(tagId => ({
+            orderId: id,
+            tagId
+          }))
+        )
+      }
+    }
+    tagsUpdated = true
+  }
+
   if (Object.keys(updates).length > 0) {
     await db.update(orders).set(updates).where(eq(orders.id, id))
   }
+
+  const orderTagsData = await db
+    .select({
+      tagId: tags.id,
+      tagName: tags.name,
+      tagColor: tags.color
+    })
+    .from(orderTags)
+    .innerJoin(tags, eq(orderTags.tagId, tags.id))
+    .where(eq(orderTags.orderId, id))
 
   const [updatedOrder] = await db
     .select({
@@ -208,7 +248,14 @@ export default defineEventHandler(async (event) => {
     .where(eq(orders.id, id))
 
   return {
-    order: updatedOrder,
-    unchanged: Object.keys(updates).length === 0
+    order: {
+      ...updatedOrder,
+      tags: orderTagsData.map(t => ({
+        id: t.tagId,
+        name: t.tagName,
+        color: t.tagColor
+      }))
+    },
+    unchanged: Object.keys(updates).length === 0 && !tagsUpdated
   }
 })

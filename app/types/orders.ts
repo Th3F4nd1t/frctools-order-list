@@ -2,6 +2,12 @@ import type { InternalApi } from 'nitropack'
 
 export type OrderStatus = 'to_order' | 'ordered' | 'arrived'
 
+export type Tag = {
+  id: string
+  name: string
+  color: string
+}
+
 export type OrderEditorValues = {
   partName: string
   quantity: number
@@ -11,6 +17,7 @@ export type OrderEditorValues = {
   variantId: string | undefined
   variantTitle: string | undefined
   externalUrl: string | undefined
+  tagIds: string[] | undefined
 }
 
 export type OrderEditorSubmitPayload = {

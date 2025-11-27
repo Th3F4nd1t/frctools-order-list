@@ -9,8 +9,10 @@
     >
       <template #description>
         Don't have an account?
-        <ULink to="/auth/signup" class="text-primary font-medium">Sign up</ULink
-        >.
+        <ULink
+          to="/auth/signup"
+          class="text-primary font-medium"
+        >Sign up</ULink>.
       </template>
 
       <template #password-hint>
@@ -18,77 +20,76 @@
           to="/auth/forgot-password"
           class="text-primary font-medium"
           tabindex="-1"
-          >Forgot password?</ULink
-        >
+        >Forgot password?</ULink>
       </template>
     </UAuthForm>
   </div>
 </template>
 
 <script setup lang="ts">
-import * as z from "zod";
-import type { FormSubmitEvent } from "#ui/types";
+import * as z from 'zod'
+import type { FormSubmitEvent } from '#ui/types'
 
 definePageMeta({
-  layout: "auth",
-});
+  layout: 'auth'
+})
 
 useSeoMeta({
-  title: "Login",
-  description: "Login to your account to continue",
-});
+  title: 'Login',
+  description: 'Login to your account to continue'
+})
 
-const { signIn } = useAuth();
+const { signIn } = useAuth()
 
 const schema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string(),
-});
+  email: z.string().email('Invalid email'),
+  password: z.string()
+})
 
-type Schema = z.output<typeof schema>;
+type Schema = z.output<typeof schema>
 
-const pending = ref(false);
+const pending = ref(false)
 
-const toast = useToast();
+const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   const { data, error } = await signIn.email(
     {
       email: event.data.email,
-      password: event.data.password,
-    },
-  );
+      password: event.data.password
+    }
+  )
   if (data) {
     toast.add({
-      title: "Success",
-      description: "You have successfully logged in.",
-      color: "success",
-    });
-    await refreshNuxtData();
-    await useAuth().fetchSession();
-    await navigateTo("/app");
+      title: 'Success',
+      description: 'You have successfully logged in.',
+      color: 'success'
+    })
+    await refreshNuxtData()
+    await useAuth().fetchSession()
+    await navigateTo('/app')
   }
   if (error) {
     toast.add({
-      title: "Error",
+      title: 'Error',
       description: error.message,
-      color: "error",
-    });
+      color: 'error'
+    })
   }
 }
 
 const fields = [
   {
-    name: "email",
-    type: "text" as const,
-    label: "Email",
-    placeholder: "Enter your email",
-    required: true,
+    name: 'email',
+    type: 'text' as const,
+    label: 'Email',
+    placeholder: 'Enter your email',
+    required: true
   },
   {
-    name: "password",
-    label: "Password",
-    type: "password" as const,
-    placeholder: "Enter your password",
-  },
-];
+    name: 'password',
+    label: 'Password',
+    type: 'password' as const,
+    placeholder: 'Enter your password'
+  }
+]
 </script>

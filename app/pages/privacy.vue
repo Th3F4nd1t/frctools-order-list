@@ -18,19 +18,23 @@
           However, some data collection is required for the site to function.
         </ProseP>
         <ProseP>
-          This data includes: 
-          </ProseP>
-          <ProseUl>
-            <ProseLi>IP addresses</ProseLi>
-            <ProseLi>Entered Usernames/Names</ProseLi>
-            <ProseLi>Emails</ProseLi>
-            <ProseLi>Hashed and salted passwords</ProseLi>
-            <ProseLi>Any other data explicitly entered into the website</ProseLi>
-          </ProseUl>
-        
+          This data includes:
+        </ProseP>
+        <ProseUl>
+          <ProseLi>IP addresses</ProseLi>
+          <ProseLi>Entered Usernames/Names</ProseLi>
+          <ProseLi>Emails</ProseLi>
+          <ProseLi>Hashed and salted passwords</ProseLi>
+          <ProseLi>Any other data explicitly entered into the website</ProseLi>
+        </ProseUl>
+
         <ProseP>
-          FRCTools Orders is hosted on <ProseA href="https://www.cloudflare.com/trust-hub/privacy-and-data-protection/">Cloudflare</ProseA>, with a database hosted on
-          <ProseA href="https://planetscale.com/docs/security">Planetscale</ProseA>. Further privacy information can be found on each's
+          FRCTools Orders is hosted on <ProseA href="https://www.cloudflare.com/trust-hub/privacy-and-data-protection/">
+            Cloudflare
+          </ProseA>, with a database hosted on
+          <ProseA href="https://planetscale.com/docs/security">
+            Planetscale
+          </ProseA>. Further privacy information can be found on each's
           respective websites.
         </ProseP>
         <ProseP>

@@ -1,10 +1,10 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { z } from 'zod'
 import { useDB } from '../../utils/db'
-import { orders, vendors } from '../../utils/schema'
+import { orders, vendors, orderTags, tags } from '../../utils/schema'
 import { user as authUser } from '../../utils/auth-schema'
 import { requireOrganizationContext } from '../../utils/session'
-import { eq, sql } from 'drizzle-orm'
+import { eq, sql, and, inArray } from 'drizzle-orm'
 
 const createOrderSchema = z.object({
   partName: z.string().min(1, 'Part name is required'),
@@ -40,7 +40,8 @@ const createOrderSchema = z.object({
     .url('Enter a valid URL')
     .optional()
     .or(z.literal(''))
-    .transform(value => (value ? value : null))
+    .transform(value => (value ? value : null)),
+  tagIds: z.array(z.string()).optional().default([])
 })
 
 export default defineEventHandler(async (event) => {
@@ -100,6 +101,38 @@ export default defineEventHandler(async (event) => {
     requestedBy: user.id
   })
 
+  if (payload.tagIds.length > 0) {
+    const validTags = await db
+      .select({ id: tags.id })
+      .from(tags)
+      .where(
+        and(
+          eq(tags.organizationId, organizationId),
+          inArray(tags.id, payload.tagIds)
+        )
+      )
+
+    const validTagIds = validTags.map(t => t.id)
+    if (validTagIds.length > 0) {
+      await db.insert(orderTags).values(
+        validTagIds.map(tagId => ({
+          orderId,
+          tagId
+        }))
+      )
+    }
+  }
+
+  const orderTagsData = await db
+    .select({
+      tagId: tags.id,
+      tagName: tags.name,
+      tagColor: tags.color
+    })
+    .from(orderTags)
+    .innerJoin(tags, eq(orderTags.tagId, tags.id))
+    .where(eq(orderTags.orderId, orderId))
+
   const [createdOrder] = await db
     .select({
       id: orders.id,
@@ -130,6 +163,13 @@ export default defineEventHandler(async (event) => {
     .where(eq(orders.id, orderId))
 
   return {
-    order: createdOrder
+    order: {
+      ...createdOrder,
+      tags: orderTagsData.map(t => ({
+        id: t.tagId,
+        name: t.tagName,
+        color: t.tagColor
+      }))
+    }
   }
 })

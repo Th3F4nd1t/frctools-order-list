@@ -21,7 +21,6 @@ useSeoMeta({
 
 <template>
   <UApp>
-
     <UHeader>
       <template #left>
         <NuxtLink

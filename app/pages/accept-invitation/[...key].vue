@@ -83,9 +83,9 @@ if (!auth.loggedIn.value) {
       if (res.error) {
         throw new Error(res.error.message)
       }
-      const orgs = useOrgs();
-      orgs.isLoading.value = false;
-      await orgs.fetchOrganizations();
+      const orgs = useOrgs()
+      orgs.isLoading.value = false
+      await orgs.fetchOrganizations()
 
       await navigateTo('/app')
     } catch (err) {

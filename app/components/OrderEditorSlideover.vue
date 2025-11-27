@@ -139,6 +139,29 @@
                 placeholder="Add context, specs, or supplier instructions"
               />
             </UFormField>
+
+            <UFormField
+              v-if="availableTags && availableTags.length > 0"
+              name="tagIds"
+              label="Tags"
+            >
+              <USelectMenu
+                v-model="formState.tagIds"
+                :items="tagOptions"
+                value-key="value"
+                multiple
+                searchable
+                placeholder="Select tags"
+              >
+                <template #item="{ item }">
+                  <span
+                    class="mr-2 inline-block h-3 w-3 rounded-full"
+                    :style="{ backgroundColor: item.color }"
+                  />
+                  {{ item.label }}
+                </template>
+              </USelectMenu>
+            </UFormField>
           </div>
 
           <div class="flex justify-end gap-2">
@@ -170,13 +193,15 @@ import type { FormSubmitEvent } from '#ui/types'
 import type {
   Order,
   OrderEditorSubmitPayload,
-  OrderEditorValues
+  OrderEditorValues,
+  Tag
 } from '~/types/orders'
 
 const props = defineProps<{
   mode: 'create' | 'edit'
   loading?: boolean
   initialOrder?: Order | null
+  availableTags?: Tag[]
 }>()
 
 const emit = defineEmits<{
@@ -242,12 +267,21 @@ const formState = reactive({
   vendorId: '',
   variantId: '',
   variantTitle: '',
-  description: ''
+  description: '',
+  tagIds: [] as string[]
 })
 
 const isLookingUpVendor = ref(false)
 
 const variantOptions = ref<VariantOption[]>([])
+
+const tagOptions = computed(() =>
+  (props.availableTags || []).map(tag => ({
+    label: tag.name,
+    value: tag.id,
+    color: tag.color
+  }))
+)
 
 const headerTitle = computed(() =>
   props.mode === 'edit' ? 'Edit order' : 'New order'
@@ -387,6 +421,7 @@ function initializeFormState() {
     formState.variantId = props.initialOrder.variantId ?? ''
     formState.variantTitle = props.initialOrder.variantTitle ?? ''
     formState.description = props.initialOrder.description ?? ''
+    formState.tagIds = props.initialOrder.tags?.map(t => t.id) ?? []
   } else {
     resetFormState()
   }
@@ -402,6 +437,7 @@ function resetFormState() {
   formState.variantId = ''
   formState.variantTitle = ''
   formState.description = ''
+  formState.tagIds = []
 }
 
 function handleCancel() {
@@ -419,7 +455,8 @@ function handleSubmit(event: FormSubmitEvent<OrderFormSchema>) {
       : undefined,
     variantId: event.data.variantId ?? undefined,
     variantTitle: event.data.variantTitle ?? undefined,
-    externalUrl: event.data.externalUrl ?? undefined
+    externalUrl: event.data.externalUrl ?? undefined,
+    tagIds: formState.tagIds.length > 0 ? formState.tagIds : undefined
   }
 
   emit('submit', {
