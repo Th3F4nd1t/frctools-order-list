@@ -9,10 +9,6 @@ A simple order list app for FRC teams.
 - 🏷️ **Tags** - Organize orders with custom tags and colors
 
 
-### Writing Documentation
-
-Documentation is stored in the `content/docs/` directory:
-
 ## Development
 
 ```bash
