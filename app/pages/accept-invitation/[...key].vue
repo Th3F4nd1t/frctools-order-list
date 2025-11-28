@@ -84,11 +84,11 @@ if (!auth.loggedIn.value) {
         throw new Error(res.error.message)
       }
       const orgs = useOrgs()
-      orgs.isLoading.value = false
       await orgs.fetchOrganizations()
 
       await navigateTo('/app')
     } catch (err) {
+      console.log(err)
       if (err instanceof Error) {
         error.value = err.message
       } else if (typeof err === 'string') {

@@ -108,10 +108,7 @@ const imageUrl = `data:image/svg+xml;base64,CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMu
             Accept Invitation
           </Button>
           <Hr :style="hr" />
-          <Text :style="paragraph">
-            If you need to cancel your session, you can manage your session
-            below.
-          </Text>
+
           <Text :style="paragraph">
             — FRCTools Orders
           </Text>
