@@ -1,27 +1,33 @@
 <script setup lang="ts">
-const { data: navigation } = await useAsyncData("docs-navigation", () =>
-  queryCollectionNavigation("docs"),
-);
-provide("navigation", navigation);
+const { data: navigation } = await useAsyncData('docs-navigation', () =>
+  queryCollectionNavigation('docs')
+)
+provide('navigation', navigation)
 
 const { data: files } = useLazyAsyncData(
-  "docs-search",
-  () => queryCollectionSearchSections("docs"),
+  'docs-search',
+  () => queryCollectionSearchSections('docs'),
   {
-    server: false,
-  },
-);
+    server: false
+  }
+)
 </script>
 
 <template>
-  <UApp>
+  <NuxtLayout name="default">
     <UMain>
       <UContainer>
         <UPage>
           <template #left>
             <UPageAside>
-              <UContentSearchButton :collapsed="false" class="w-full mb-4" />
-              <UContentNavigation highlight :navigation="navigation" />
+              <UContentSearchButton
+                :collapsed="false"
+                class="w-full mb-4"
+              />
+              <UContentNavigation
+                highlight
+                :navigation="navigation"
+              />
             </UPageAside>
           </template>
 
@@ -31,7 +37,10 @@ const { data: files } = useLazyAsyncData(
     </UMain>
 
     <ClientOnly>
-      <LazyUContentSearch :files="files" :navigation="navigation" />
+      <LazyUContentSearch
+        :files="files"
+        :navigation="navigation"
+      />
     </ClientOnly>
-  </UApp>
+  </NuxtLayout>
 </template>

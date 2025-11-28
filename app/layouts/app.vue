@@ -1,25 +1,27 @@
 <template>
-  <div
-    v-if="hasOrganization"
-    class="contents"
-  >
-    <slot />
-  </div>
-
-  <div
-    v-else
-    class="contents"
-  >
-    <div class="h-screen flex items-center justify-center px-4">
-      <UPageCard
-        variant="subtle"
-        class="max-w-sm w-full"
-        title="Create an organization"
-        description="To get started, create or join an organization."
-        icon="i-lucide-building-2"
-      />
+  <NuxtLayout name="default">
+    <div
+      v-if="hasOrganization"
+      class="contents"
+    >
+      <slot />
     </div>
-  </div>
+
+    <div
+      v-else
+      class="contents"
+    >
+      <div class="h-screen flex items-center justify-center px-4">
+        <UPageCard
+          variant="subtle"
+          class="max-w-sm w-full"
+          title="Create an organization"
+          description="To get started, create or join an organization."
+          icon="i-lucide-building-2"
+        />
+      </div>
+    </div>
+  </NuxtLayout>
 </template>
 
 <script setup lang="ts">

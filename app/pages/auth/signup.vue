@@ -74,7 +74,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       description: 'You have successfully signed up!',
       color: 'success'
     })
-
+    await useAuth().fetchSession()
     await navigateTo(redirectTarget.value)
   }
 

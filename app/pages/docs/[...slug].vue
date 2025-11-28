@@ -1,51 +1,51 @@
 <script setup lang="ts">
-import type { ContentNavigationItem } from "@nuxt/content";
-import { findPageHeadline } from "@nuxt/content/utils";
+import type { ContentNavigationItem } from '@nuxt/content'
+import { findPageHeadline } from '@nuxt/content/utils'
 
 definePageMeta({
-  layout: "docs",
-});
+  layout: 'docs'
+})
 
-const route = useRoute();
-const { toc } = useAppConfig();
+const route = useRoute()
+const { toc } = useAppConfig()
 
 // From docs layout
-const navigation = inject<Ref<ContentNavigationItem[]>>("navigation");
+const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
 
 const { data: page } = await useAsyncData(route.path, () =>
-  queryCollection("docs").path(route.path).first(),
-);
+  queryCollection('docs').path(route.path).first()
+)
 if (!page.value) {
   throw createError({
     statusCode: 404,
-    statusMessage: "Page not found",
-    fatal: true,
-  });
+    statusMessage: 'Page not found',
+    fatal: true
+  })
 }
 
 const { data: surround } = await useAsyncData(`${route.path}-surround`, () => {
-  return queryCollectionItemSurroundings("docs", route.path, {
-    fields: ["description"],
-  });
-});
+  return queryCollectionItemSurroundings('docs', route.path, {
+    fields: ['description']
+  })
+})
 
-const title = page.value.seo?.title || page.value.title;
-const description = page.value.seo?.description || page.value.description;
+const title = page.value.seo?.title || page.value.title
+const description = page.value.seo?.description || page.value.description
 
 useSeoMeta({
   title,
   ogTitle: title,
   description,
-  ogDescription: description,
-});
+  ogDescription: description
+})
 
 const links = computed(
   () =>
-    toc?.bottom?.links?.map((link) => ({
+    toc?.bottom?.links?.map(link => ({
       ...link,
-      target: link.target,
-    })) || [],
-);
+      target: link.target
+    })) || []
+)
 </script>
 
 <template>
@@ -58,23 +58,41 @@ const links = computed(
     />
 
     <UPageBody>
-      <ContentRenderer v-if="page" :value="page" />
+      <ContentRenderer
+        v-if="page"
+        :value="page"
+      />
 
       <USeparator v-if="surround?.length" />
 
       <UContentSurround :surround="surround" />
     </UPageBody>
 
-    <template v-if="page?.body?.toc?.links?.length" #right>
-      <UContentToc :title="toc?.title" :links="page.body?.toc?.links">
-        <template v-if="toc?.bottom" #bottom>
+    <template
+      v-if="page?.body?.toc?.links?.length"
+      #right
+    >
+      <UContentToc
+        :title="toc?.title"
+        :links="page.body?.toc?.links"
+      >
+        <template
+          v-if="toc?.bottom"
+          #bottom
+        >
           <div
             class="hidden lg:block space-y-6"
             :class="{ 'mt-6!': page.body?.toc?.links?.length }"
           >
-            <USeparator v-if="page.body?.toc?.links?.length" type="dashed" />
+            <USeparator
+              v-if="page.body?.toc?.links?.length"
+              type="dashed"
+            />
 
-            <UPageLinks :title="toc.bottom.title" :links="links" />
+            <UPageLinks
+              :title="toc.bottom.title"
+              :links="links"
+            />
           </div>
         </template>
       </UContentToc>

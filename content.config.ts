@@ -1,12 +1,12 @@
-import { defineContentConfig, defineCollection, z } from "@nuxt/content";
+import { defineContentConfig, defineCollection, z } from '@nuxt/content'
 
 export default defineContentConfig({
   collections: {
     docs: defineCollection({
-      type: "page",
+      type: 'page',
       source: {
-        include: "docs/**",
-        prefix: "/docs",
+        include: 'docs/**',
+        prefix: '/docs'
       },
       schema: z.object({
         links: z
@@ -15,11 +15,11 @@ export default defineContentConfig({
               label: z.string(),
               icon: z.string(),
               to: z.string(),
-              target: z.string().optional(),
-            }),
+              target: z.string().optional()
+            })
           )
-          .optional(),
-      }),
-    }),
-  },
-});
+          .optional()
+      })
+    })
+  }
+})

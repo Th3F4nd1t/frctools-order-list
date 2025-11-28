@@ -14,14 +14,6 @@
           class="text-primary font-medium"
         >Sign up</ULink>.
       </template>
-
-      <template #password-hint>
-        <ULink
-          to="/auth/forgot-password"
-          class="text-primary font-medium"
-          tabindex="-1"
-        >Forgot password?</ULink>
-      </template>
     </UAuthForm>
   </div>
 </template>
@@ -64,7 +56,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       description: 'You have successfully logged in.',
       color: 'success'
     })
-    await refreshNuxtData()
     await useAuth().fetchSession()
     await navigateTo('/app')
   }

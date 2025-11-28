@@ -33,7 +33,10 @@
           </div>
         </template>
 
-        <div v-if="!activeOrganization" class="flex justify-center">
+        <div
+          v-if="!activeOrganization"
+          class="flex justify-center"
+        >
           <UCard
             class="max-w-lg w-full"
             icon="i-lucide-building-2"
@@ -46,7 +49,10 @@
           </UCard>
         </div>
 
-        <div v-else class="space-y-10">
+        <div
+          v-else
+          class="space-y-10"
+        >
           <UCard>
             <template #header>
               <div class="flex flex-wrap items-center justify-between gap-4">
@@ -57,18 +63,27 @@
                     {{ activeOrganization.name }}
                   </h2>
                 </div>
-                <UBadge variant="soft" color="primary"> Active </UBadge>
+                <UBadge
+                  variant="soft"
+                  color="primary"
+                >
+                  Active
+                </UBadge>
               </div>
             </template>
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
-                <p class="text-xs uppercase text-gray-500">Created</p>
+                <p class="text-xs uppercase text-gray-500">
+                  Created
+                </p>
                 <p class="text-sm text-gray-900 dark:text-gray-200">
                   {{ formatDate(activeOrganization.createdAt) ?? "Unknown" }}
                 </p>
               </div>
               <div>
-                <p class="text-xs uppercase text-gray-500">Members</p>
+                <p class="text-xs uppercase text-gray-500">
+                  Members
+                </p>
                 <p class="text-sm text-gray-900 dark:text-gray-200">
                   {{ membersLoading ? "Loading…" : members.length }}
                 </p>
@@ -90,7 +105,10 @@
                     organization.
                   </p>
                 </div>
-                <UBadge variant="soft" color="neutral">
+                <UBadge
+                  variant="soft"
+                  color="neutral"
+                >
                   Roles: {{ availableRoles.join(", ") }}
                 </UBadge>
               </div>
@@ -103,7 +121,11 @@
               @submit="handleInviteSubmit"
             >
               <div class="space-y-4 md:col-span-1">
-                <UFormField label="Email" name="email" required>
+                <UFormField
+                  label="Email"
+                  name="email"
+                  required
+                >
                   <UInput
                     v-model="inviteFormState.email"
                     type="email"
@@ -155,9 +177,16 @@
             </UForm>
           </UCard>
 
-          <UTabs v-model="activeTab" :items="tabItems" class="gap-0" />
+          <UTabs
+            v-model="activeTab"
+            :items="tabItems"
+            class="gap-0"
+          />
 
-          <div v-if="activeTab === 'members'" class="space-y-4">
+          <div
+            v-if="activeTab === 'members'"
+            class="space-y-4"
+          >
             <UAlert
               v-if="membersError"
               color="error"
@@ -266,7 +295,10 @@
             </UCard>
           </div>
 
-          <div v-else-if="activeTab === 'invitations'" class="space-y-4">
+          <div
+            v-else-if="activeTab === 'invitations'"
+            class="space-y-4"
+          >
             <UAlert
               v-if="invitationsError"
               color="error"
@@ -340,7 +372,10 @@
                 </template>
 
                 <template #role-cell="{ row }">
-                  <UBadge variant="soft" color="neutral">
+                  <UBadge
+                    variant="soft"
+                    color="neutral"
+                  >
                     {{ row.getValue("role") }}
                   </UBadge>
                 </template>
@@ -390,7 +425,10 @@
             </UCard>
           </div>
 
-          <div v-else-if="activeTab === 'tags'" class="space-y-4">
+          <div
+            v-else-if="activeTab === 'tags'"
+            class="space-y-4"
+          >
             <TagEditorSlideover
               v-model:open="isTagSlideoverOpen"
               @created="refreshTags"
@@ -419,18 +457,21 @@
                     </p>
                   </div>
                   <div class="flex gap-2">
-                  <UButton
-                    color="neutral"
-                    variant="soft"
-                    icon="i-lucide-refresh-ccw"
-                    :loading="tagsLoading"
-                    @click="refreshTags"
-                  >
-                    Refresh
-                  </UButton>
-                  <UButton icon="i-lucide-plus" @click="openCreateTagEditor">
-                    New tag
-                  </UButton>
+                    <UButton
+                      color="neutral"
+                      variant="soft"
+                      icon="i-lucide-refresh-ccw"
+                      :loading="tagsLoading"
+                      @click="refreshTags"
+                    >
+                      Refresh
+                    </UButton>
+                    <UButton
+                      icon="i-lucide-plus"
+                      @click="openCreateTagEditor"
+                    >
+                      New tag
+                    </UButton>
                   </div>
                 </div>
               </template>
@@ -453,7 +494,10 @@
                 No tags yet. Create a tag to help organize orders.
               </div>
 
-              <div v-else class="space-y-3">
+              <div
+                v-else
+                class="space-y-3"
+              >
                 <div
                   v-for="tag in organizationTags"
                   :key="tag.id"
@@ -498,265 +542,265 @@ import {
   ref,
   watch,
   type Ref,
-  onServerPrefetch,
-} from "vue";
-import { z } from "zod";
-import type { FormSubmitEvent, TableColumn } from "#ui/types";
+  onServerPrefetch
+} from 'vue'
+import { z } from 'zod'
+import type { FormSubmitEvent, TableColumn } from '#ui/types'
 
-const auth = useAuth();
-const toast = useToast();
+const auth = useAuth()
+const toast = useToast()
 
-const activeMemberQuery = auth.client.useActiveMember();
+const activeMemberQuery = auth.client.useActiveMember()
 
-const { organization: activeOrganization, fetchCurrentOrganization } =
-  useOrgs();
+const { organization: activeOrganization, fetchCurrentOrganization }
+  = useOrgs()
 
 onServerPrefetch(async () => {
-  await fetchCurrentOrganization();
-});
+  await fetchCurrentOrganization()
+})
 
 if (import.meta.client) {
   if (!activeOrganization.value) {
-    void fetchCurrentOrganization();
+    void fetchCurrentOrganization()
   }
 }
-const activeMember = computed(() => activeMemberQuery.value.data ?? null);
+const activeMember = computed(() => activeMemberQuery.value.data ?? null)
 
-type ListMembersResult = { data: (typeof auth.client.$Infer.Member)[] };
-type OrganizationMember = NonNullable<ListMembersResult["data"]>[number];
+type ListMembersResult = { data: (typeof auth.client.$Infer.Member)[] }
+type OrganizationMember = NonNullable<ListMembersResult['data']>[number]
 
-type ListInvitationsResult = { data: (typeof auth.client.$Infer.Invitation)[] };
+type ListInvitationsResult = { data: (typeof auth.client.$Infer.Invitation)[] }
 type OrganizationInvitation = NonNullable<
-  ListInvitationsResult["data"]
->[number];
-type Role = (typeof auth.client.$Infer.Invitation)["role"];
-const members = ref<OrganizationMember[]>([]);
-const invitations = ref<OrganizationInvitation[]>([]);
+  ListInvitationsResult['data']
+>[number]
+type Role = (typeof auth.client.$Infer.Invitation)['role']
+const members = ref<OrganizationMember[]>([])
+const invitations = ref<OrganizationInvitation[]>([])
 
-const membersLoading = ref(false);
-const invitationsLoading = ref(false);
-const membersError = ref<string | null>(null);
-const invitationsError = ref<string | null>(null);
-const activeTab = ref<"members" | "invitations" | "tags">("members");
+const membersLoading = ref(false)
+const invitationsLoading = ref(false)
+const membersError = ref<string | null>(null)
+const invitationsError = ref<string | null>(null)
+const activeTab = ref<'members' | 'invitations' | 'tags'>('members')
 
-const updatingMemberIds = ref(new Set<string>());
-const removingMemberIds = ref(new Set<string>());
-const resendingInvitationIds = ref(new Set<string>());
-const cancellingInvitationIds = ref(new Set<string>());
-const deletingTagIds = ref(new Set<string>());
+const updatingMemberIds = ref(new Set<string>())
+const removingMemberIds = ref(new Set<string>())
+const resendingInvitationIds = ref(new Set<string>())
+const cancellingInvitationIds = ref(new Set<string>())
+const deletingTagIds = ref(new Set<string>())
 
 // Tags state
 type OrganizationTag = {
-  id: string;
-  name: string;
-  color: string;
-  createdAt: Date | string;
-};
+  id: string
+  name: string
+  color: string
+  createdAt: Date | string
+}
 
-const organizationTags = ref<OrganizationTag[]>([]);
-const tagsLoading = ref(false);
-const tagsError = ref<string | null>(null);
+const organizationTags = ref<OrganizationTag[]>([])
+const tagsLoading = ref(false)
+const tagsError = ref<string | null>(null)
 
-const isTagSlideoverOpen = ref(false);
+const isTagSlideoverOpen = ref(false)
 
 function openCreateTagEditor() {
-  isTagSlideoverOpen.value = true;
+  isTagSlideoverOpen.value = true
 }
 
 const inviteMemberSchema = z.object({
-  email: z.string().email("Enter a valid email address"),
-  role: z.string().min(1, "Role is required"),
-  resend: z.boolean().default(false),
-});
+  email: z.string().email('Enter a valid email address'),
+  role: z.string().min(1, 'Role is required'),
+  resend: z.boolean().default(false)
+})
 
-type InviteForm = z.infer<typeof inviteMemberSchema>;
+type InviteForm = z.infer<typeof inviteMemberSchema>
 
 const inviteFormState = reactive<InviteForm>({
-  email: "",
-  role: "member",
-  resend: false,
-});
+  email: '',
+  role: 'member',
+  resend: false
+})
 
 const tabItems = [
-  { label: "Members", value: "members", icon: "i-lucide-users" },
-  { label: "Invitations", value: "invitations", icon: "i-lucide-mail" },
-  { label: "Tags", value: "tags", icon: "i-lucide-tags" },
-];
+  { label: 'Members', value: 'members', icon: 'i-lucide-users' },
+  { label: 'Invitations', value: 'invitations', icon: 'i-lucide-mail' },
+  { label: 'Tags', value: 'tags', icon: 'i-lucide-tags' }
+]
 
 const memberTableRows = computed(() =>
-  members.value.map((member) => ({
+  members.value.map(member => ({
     id: resolveMemberId(member),
-    name: member.user?.name ?? member.user?.email ?? "Unknown member",
-    email: member.user?.email ?? "-",
+    name: member.user?.name ?? member.user?.email ?? 'Unknown member',
+    email: member.user?.email ?? '-',
     role: primaryRole(member),
     joinedAt: member.createdAt ?? null,
-    raw: member,
-  })),
-);
+    raw: member
+  }))
+)
 
 const invitationTableRows = computed(() =>
-  invitations.value.map((invitation) => ({
+  invitations.value.map(invitation => ({
     id: invitation.id,
     email: invitation.email,
     role: primaryRole(invitation),
-    status: invitation.status ?? "pending",
+    status: invitation.status ?? 'pending',
     expiresAt: invitation.expiresAt ?? null,
-    raw: invitation,
-  })),
-);
-type MemberTableRow = (typeof memberTableRows)["value"][number];
+    raw: invitation
+  }))
+)
+type MemberTableRow = (typeof memberTableRows)['value'][number]
 
 const memberTableColumns: TableColumn<MemberTableRow>[] = [
-  { accessorKey: "name", header: "Member" },
-  { accessorKey: "email", header: "Email" },
-  { accessorKey: "role", header: "Role" },
-  { accessorKey: "joinedAt", header: "Joined" },
-  { accessorKey: "actions", header: "" },
-];
-type InvitationTableRow = (typeof invitationTableRows)["value"][number];
+  { accessorKey: 'name', header: 'Member' },
+  { accessorKey: 'email', header: 'Email' },
+  { accessorKey: 'role', header: 'Role' },
+  { accessorKey: 'joinedAt', header: 'Joined' },
+  { accessorKey: 'actions', header: '' }
+]
+type InvitationTableRow = (typeof invitationTableRows)['value'][number]
 const invitationTableColumns: TableColumn<InvitationTableRow>[] = [
-  { accessorKey: "email", header: "Invitee" },
-  { accessorKey: "role", header: "Role" },
-  { accessorKey: "status", header: "Status" },
-  { accessorKey: "expiresAt", header: "Expires" },
-  { accessorKey: "actions", header: "" },
-];
+  { accessorKey: 'email', header: 'Invitee' },
+  { accessorKey: 'role', header: 'Role' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'expiresAt', header: 'Expires' },
+  { accessorKey: 'actions', header: '' }
+]
 const availableRoles = computed(() => {
-  const roles = new Set<string>(["owner", "admin", "member"]);
+  const roles = new Set<string>(['owner', 'admin', 'member'])
   for (const member of members.value) {
-    for (const role of extractRoles(member.role)) roles.add(role);
+    for (const role of extractRoles(member.role)) roles.add(role)
   }
   for (const invitation of invitations.value) {
-    for (const role of extractRoles(invitation.role)) roles.add(role);
+    for (const role of extractRoles(invitation.role)) roles.add(role)
   }
-  return [...roles].sort();
-});
+  return [...roles].sort()
+})
 
 const roleOptions = computed(() =>
-  availableRoles.value.map((role) => ({
+  availableRoles.value.map(role => ({
     label: role.charAt(0).toUpperCase() + role.slice(1),
-    value: role,
-  })),
-);
+    value: role
+  }))
+)
 
 const canManageMembers = computed(() => {
-  const roles = extractRoles(activeMember.value?.role);
-  return roles.includes("owner") || roles.includes("admin");
-});
+  const roles = extractRoles(activeMember.value?.role)
+  return roles.includes('owner') || roles.includes('admin')
+})
 
 const isRefreshing = computed(
-  () => membersLoading.value || invitationsLoading.value,
-);
+  () => membersLoading.value || invitationsLoading.value
+)
 
 watch(
   () => activeOrganization.value?.id,
   async (id) => {
     if (!id) {
-      members.value = [];
-      invitations.value = [];
-      organizationTags.value = [];
-      return;
+      members.value = []
+      invitations.value = []
+      organizationTags.value = []
+      return
     }
-    await Promise.all([refreshMembers(), refreshInvitations(), refreshTags()]);
+    await Promise.all([refreshMembers(), refreshInvitations(), refreshTags()])
   },
-  { immediate: true },
-);
+  { immediate: true }
+)
 
 function extractRoles(input: unknown): Role[] {
-  if (!input) return [];
+  if (!input) return []
   if (Array.isArray(input)) {
     return input
-      .map((role) => (typeof role === "string" ? role.trim() : ""))
+      .map(role => (typeof role === 'string' ? role.trim() : ''))
       .filter((role): role is Role => Boolean(role))
-      .filter(Boolean);
+      .filter(Boolean)
   }
-  if (typeof input === "string") {
+  if (typeof input === 'string') {
     return input
-      .split(",")
-      .map((role) => role.trim())
+      .split(',')
+      .map(role => role.trim())
       .filter((role): role is Role => Boolean(role))
-      .filter(Boolean);
+      .filter(Boolean)
   }
-  return [];
+  return []
 }
 
 function primaryRole(entity: { role?: Role | Role[] | null }): Role {
-  const [first] = extractRoles(entity.role);
-  return first ?? "member";
+  const [first] = extractRoles(entity.role)
+  return first ?? 'member'
 }
 
 function resolveMemberId(member: OrganizationMember) {
   return (
-    member.id ??
-    (member as { memberId?: string }).memberId ??
-    member.userId ??
-    member.user?.email ??
-    `member:${primaryRole(member)}`
-  );
+    member.id
+    ?? (member as { memberId?: string }).memberId
+    ?? member.userId
+    ?? member.user?.email
+    ?? `member:${primaryRole(member)}`
+  )
 }
 
 function extractErrorMessage(err: unknown) {
-  if (typeof err === "string") return err;
-  if (err instanceof Error) return err.message;
-  if (err && typeof err === "object") {
+  if (typeof err === 'string') return err
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object') {
     const candidate = err as {
-      message?: string;
-      data?: { statusMessage?: string };
-    };
+      message?: string
+      data?: { statusMessage?: string }
+    }
     return (
-      candidate.message ??
-      candidate.data?.statusMessage ??
-      "Something went wrong. Please try again."
-    );
+      candidate.message
+      ?? candidate.data?.statusMessage
+      ?? 'Something went wrong. Please try again.'
+    )
   }
-  return "Something went wrong. Please try again.";
+  return 'Something went wrong. Please try again.'
 }
 
 async function refreshMembers() {
-  if (!activeOrganization.value?.id) return;
-  membersLoading.value = true;
-  membersError.value = null;
+  if (!activeOrganization.value?.id) return
+  membersLoading.value = true
+  membersError.value = null
   try {
     const { data, error } = await auth.client.organization.listMembers({
-      query: { organizationId: activeOrganization.value.id },
-    });
-    if (error) throw error;
-    members.value = (data.members as OrganizationMember[]) ?? [];
+      query: { organizationId: activeOrganization.value.id }
+    })
+    if (error) throw error
+    members.value = (data.members as OrganizationMember[]) ?? []
   } catch (err) {
-    membersError.value = extractErrorMessage(err);
+    membersError.value = extractErrorMessage(err)
   } finally {
-    membersLoading.value = false;
+    membersLoading.value = false
   }
 }
 
 async function refreshInvitations() {
-  if (!activeOrganization.value?.id) return;
-  invitationsLoading.value = true;
-  invitationsError.value = null;
+  if (!activeOrganization.value?.id) return
+  invitationsLoading.value = true
+  invitationsError.value = null
   try {
     const { data, error } = await auth.client.organization.listInvitations({
-      query: { organizationId: activeOrganization.value.id },
-    });
-    if (error) throw error;
-    invitations.value = data ?? [];
+      query: { organizationId: activeOrganization.value.id }
+    })
+    if (error) throw error
+    invitations.value = data ?? []
   } catch (err) {
-    invitationsError.value = extractErrorMessage(err);
+    invitationsError.value = extractErrorMessage(err)
   } finally {
-    invitationsLoading.value = false;
+    invitationsLoading.value = false
   }
 }
 
 async function refreshTags() {
-  if (!activeOrganization.value?.id) return;
-  tagsLoading.value = true;
-  tagsError.value = null;
+  if (!activeOrganization.value?.id) return
+  tagsLoading.value = true
+  tagsError.value = null
   try {
-    const data = (await $fetch("/api/tags")) as { tags: OrganizationTag[] };
-    organizationTags.value = data.tags ?? [];
+    const data = (await $fetch('/api/tags')) as { tags: OrganizationTag[] }
+    organizationTags.value = data.tags ?? []
   } catch (err) {
-    tagsError.value = extractErrorMessage(err);
+    tagsError.value = extractErrorMessage(err)
   } finally {
-    tagsLoading.value = false;
+    tagsLoading.value = false
   }
 }
 
@@ -766,271 +810,271 @@ async function refreshAll() {
     refreshMembers(),
     refreshInvitations(),
     refreshTags(),
-    activeMemberQuery.value.refetch?.(),
-  ]);
+    activeMemberQuery.value.refetch?.()
+  ])
 }
 
 function resetInviteForm() {
-  inviteFormState.email = "";
-  inviteFormState.role = availableRoles.value.includes("member")
-    ? "member"
-    : (availableRoles.value[0] ?? "member");
-  inviteFormState.resend = false;
+  inviteFormState.email = ''
+  inviteFormState.role = availableRoles.value.includes('member')
+    ? 'member'
+    : (availableRoles.value[0] ?? 'member')
+  inviteFormState.resend = false
 }
 
-const isInviteSubmitting = ref(false);
+const isInviteSubmitting = ref(false)
 
 async function handleInviteSubmit(event: FormSubmitEvent<InviteForm>) {
-  if (!activeOrganization.value) return;
-  isInviteSubmitting.value = true;
+  if (!activeOrganization.value) return
+  isInviteSubmitting.value = true
   try {
     const payload = {
       email: event.data.email,
-      role: event.data.role as "member" | "admin" | "owner",
+      role: event.data.role as 'member' | 'admin' | 'owner',
       resend: event.data.resend,
-      organizationId: activeOrganization.value.id,
-    };
-    const { error } = await auth.client.organization.inviteMember(payload);
-    if (error) throw error;
+      organizationId: activeOrganization.value.id
+    }
+    const { error } = await auth.client.organization.inviteMember(payload)
+    if (error) throw error
     toast.add({
-      title: "Invitation sent",
-      color: "success",
-      icon: "i-lucide-send",
-    });
-    resetInviteForm();
-    await refreshInvitations();
+      title: 'Invitation sent',
+      color: 'success',
+      icon: 'i-lucide-send'
+    })
+    resetInviteForm()
+    await refreshInvitations()
   } catch (err) {
     toast.add({
-      title: "Unable to send invitation",
+      title: 'Unable to send invitation',
       description: extractErrorMessage(err),
-      color: "error",
-      icon: "i-lucide-alert-triangle",
-    });
+      color: 'error',
+      icon: 'i-lucide-alert-triangle'
+    })
   } finally {
-    isInviteSubmitting.value = false;
+    isInviteSubmitting.value = false
   }
 }
 
 // Small utility to keep per-entity loading state immutable for Vue reactivity.
 const loadingGuard = (set: Ref<Set<string>>) => ({
   add(id: string) {
-    const next = new Set(set.value);
-    next.add(id);
-    set.value = next;
+    const next = new Set(set.value)
+    next.add(id)
+    set.value = next
   },
   remove(id: string) {
-    const next = new Set(set.value);
-    next.delete(id);
-    set.value = next;
+    const next = new Set(set.value)
+    next.delete(id)
+    set.value = next
   },
   has(id: string) {
-    return set.value.has(id);
-  },
-});
+    return set.value.has(id)
+  }
+})
 
-const roleLoading = loadingGuard(updatingMemberIds);
-const removeLoading = loadingGuard(removingMemberIds);
-const resendLoading = loadingGuard(resendingInvitationIds);
-const cancelLoading = loadingGuard(cancellingInvitationIds);
+const roleLoading = loadingGuard(updatingMemberIds)
+const removeLoading = loadingGuard(removingMemberIds)
+const resendLoading = loadingGuard(resendingInvitationIds)
+const cancelLoading = loadingGuard(cancellingInvitationIds)
 
 function isUpdatingRole(member: OrganizationMember) {
-  return roleLoading.has(resolveMemberId(member));
+  return roleLoading.has(resolveMemberId(member))
 }
 
 function isRemovingMember(member: OrganizationMember) {
-  return removeLoading.has(resolveMemberId(member));
+  return removeLoading.has(resolveMemberId(member))
 }
 
 function isResending(invitation: OrganizationInvitation) {
-  return resendLoading.has(invitation.id);
+  return resendLoading.has(invitation.id)
 }
 
 function isCancelling(invitation: OrganizationInvitation) {
-  return cancelLoading.has(invitation.id);
+  return cancelLoading.has(invitation.id)
 }
 
 function canRemoveMember(member: OrganizationMember) {
-  if (!canManageMembers.value) return false;
-  const memberId = member.userId;
-  const currentId = activeMember.value?.userId ?? activeMember.value?.id;
-  if (memberId && currentId && memberId === currentId) return false;
-  return true;
+  if (!canManageMembers.value) return false
+  const memberId = member.userId
+  const currentId = activeMember.value?.userId ?? activeMember.value?.id
+  if (memberId && currentId && memberId === currentId) return false
+  return true
 }
 
 async function onMemberRoleChange(
   member: OrganizationMember,
-  newRole: string | null,
+  newRole: string | null
 ) {
-  if (!newRole || !activeOrganization.value) return;
-  if (primaryRole(member) === newRole) return;
-  const id = resolveMemberId(member);
-  roleLoading.add(id);
+  if (!newRole || !activeOrganization.value) return
+  if (primaryRole(member) === newRole) return
+  const id = resolveMemberId(member)
+  roleLoading.add(id)
   try {
     const { error } = await auth.client.organization.updateMemberRole({
       role: newRole,
       memberId: member.id ?? member.userId ?? id,
-      organizationId: activeOrganization.value.id,
-    });
-    if (error) throw error;
+      organizationId: activeOrganization.value.id
+    })
+    if (error) throw error
     toast.add({
-      title: "Role updated",
-      color: "success",
-      icon: "i-lucide-shield-check",
-    });
-    await Promise.all([refreshMembers(), activeMemberQuery.value.refetch?.()]);
+      title: 'Role updated',
+      color: 'success',
+      icon: 'i-lucide-shield-check'
+    })
+    await Promise.all([refreshMembers(), activeMemberQuery.value.refetch?.()])
   } catch (err) {
     toast.add({
-      title: "Unable to update role",
+      title: 'Unable to update role',
       description: extractErrorMessage(err),
-      color: "error",
-      icon: "i-lucide-alert-triangle",
-    });
+      color: 'error',
+      icon: 'i-lucide-alert-triangle'
+    })
   } finally {
-    roleLoading.remove(id);
+    roleLoading.remove(id)
   }
 }
 
 async function removeMember(member: OrganizationMember) {
-  if (!activeOrganization.value) return;
-  if (!canRemoveMember(member)) return;
-  const id = resolveMemberId(member);
-  if (typeof window !== "undefined") {
+  if (!activeOrganization.value) return
+  if (!canRemoveMember(member)) return
+  const id = resolveMemberId(member)
+  if (typeof window !== 'undefined') {
     const confirmed = window.confirm(
-      `Remove ${member.user?.email ?? "this member"}?`,
-    );
-    if (!confirmed) return;
+      `Remove ${member.user?.email ?? 'this member'}?`
+    )
+    if (!confirmed) return
   }
-  removeLoading.add(id);
+  removeLoading.add(id)
   try {
     const { error } = await auth.client.organization.removeMember({
       memberIdOrEmail: member.id ?? member.userId ?? member.user?.email ?? id,
-      organizationId: activeOrganization.value.id,
-    });
-    if (error) throw error;
+      organizationId: activeOrganization.value.id
+    })
+    if (error) throw error
     toast.add({
-      title: "Member removed",
-      color: "success",
-      icon: "i-lucide-user-minus",
-    });
-    await Promise.all([refreshMembers(), activeMemberQuery.value.refetch?.()]);
+      title: 'Member removed',
+      color: 'success',
+      icon: 'i-lucide-user-minus'
+    })
+    await Promise.all([refreshMembers(), activeMemberQuery.value.refetch?.()])
   } catch (err) {
     toast.add({
-      title: "Unable to remove member",
+      title: 'Unable to remove member',
       description: extractErrorMessage(err),
-      color: "error",
-      icon: "i-lucide-alert-triangle",
-    });
+      color: 'error',
+      icon: 'i-lucide-alert-triangle'
+    })
   } finally {
-    removeLoading.remove(id);
+    removeLoading.remove(id)
   }
 }
 
 async function resendInvitation(invitation: OrganizationInvitation) {
-  if (!activeOrganization.value) return;
-  resendLoading.add(invitation.id);
+  if (!activeOrganization.value) return
+  resendLoading.add(invitation.id)
   try {
     const { error } = await auth.client.organization.inviteMember({
       email: invitation.email,
       role: invitation.role,
       resend: true,
-      organizationId: activeOrganization.value.id,
-    });
-    if (error) throw error;
+      organizationId: activeOrganization.value.id
+    })
+    if (error) throw error
     toast.add({
-      title: "Invitation resent",
-      color: "success",
-      icon: "i-lucide-send",
-    });
-    await refreshInvitations();
+      title: 'Invitation resent',
+      color: 'success',
+      icon: 'i-lucide-send'
+    })
+    await refreshInvitations()
   } catch (err) {
     toast.add({
-      title: "Unable to resend invitation",
+      title: 'Unable to resend invitation',
       description: extractErrorMessage(err),
-      color: "error",
-      icon: "i-lucide-alert-triangle",
-    });
+      color: 'error',
+      icon: 'i-lucide-alert-triangle'
+    })
   } finally {
-    resendLoading.remove(invitation.id);
+    resendLoading.remove(invitation.id)
   }
 }
 
 async function cancelInvitation(invitation: OrganizationInvitation) {
-  if (!activeOrganization.value) return;
-  if (typeof window !== "undefined") {
+  if (!activeOrganization.value) return
+  if (typeof window !== 'undefined') {
     const confirmed = window.confirm(
-      `Cancel invitation for ${invitation.email}?`,
-    );
-    if (!confirmed) return;
+      `Cancel invitation for ${invitation.email}?`
+    )
+    if (!confirmed) return
   }
-  cancelLoading.add(invitation.id);
+  cancelLoading.add(invitation.id)
   try {
     const { error } = await auth.client.organization.cancelInvitation({
-      invitationId: invitation.id,
-    });
-    if (error) throw error;
+      invitationId: invitation.id
+    })
+    if (error) throw error
     toast.add({
-      title: "Invitation canceled",
-      color: "success",
-      icon: "i-lucide-x",
-    });
-    await refreshInvitations();
+      title: 'Invitation canceled',
+      color: 'success',
+      icon: 'i-lucide-x'
+    })
+    await refreshInvitations()
   } catch (err) {
     toast.add({
-      title: "Unable to cancel invitation",
+      title: 'Unable to cancel invitation',
       description: extractErrorMessage(err),
-      color: "error",
-      icon: "i-lucide-alert-triangle",
-    });
+      color: 'error',
+      icon: 'i-lucide-alert-triangle'
+    })
   } finally {
-    cancelLoading.remove(invitation.id);
+    cancelLoading.remove(invitation.id)
   }
 }
 
 // Tag management functions
-const tagLoading = loadingGuard(deletingTagIds);
+const tagLoading = loadingGuard(deletingTagIds)
 
 function isDeletingTag(tagId: string) {
-  return tagLoading.has(tagId);
+  return tagLoading.has(tagId)
 }
 
 async function deleteTag(tag: OrganizationTag) {
-  if (!activeOrganization.value) return;
-  if (typeof window !== "undefined") {
-    const confirmed = window.confirm(`Delete tag "${tag.name}"?`);
-    if (!confirmed) return;
+  if (!activeOrganization.value) return
+  if (typeof window !== 'undefined') {
+    const confirmed = window.confirm(`Delete tag "${tag.name}"?`)
+    if (!confirmed) return
   }
-  tagLoading.add(tag.id);
+  tagLoading.add(tag.id)
   try {
     await $fetch(`/api/tags/${tag.id}`, {
-      method: "DELETE",
-    });
+      method: 'DELETE'
+    })
     toast.add({
-      title: "Tag deleted",
-      color: "success",
-      icon: "i-lucide-trash-2",
-    });
-    await refreshTags();
+      title: 'Tag deleted',
+      color: 'success',
+      icon: 'i-lucide-trash-2'
+    })
+    await refreshTags()
   } catch (err) {
     toast.add({
-      title: "Unable to delete tag",
+      title: 'Unable to delete tag',
       description: extractErrorMessage(err),
-      color: "error",
-      icon: "i-lucide-alert-triangle",
-    });
+      color: 'error',
+      icon: 'i-lucide-alert-triangle'
+    })
   } finally {
-    tagLoading.remove(tag.id);
+    tagLoading.remove(tag.id)
   }
 }
 
 function formatDate(value: string | Date | null | undefined) {
-  if (!value) return null;
+  if (!value) return null
   try {
     return new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(value));
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(new Date(value))
   } catch {
-    return null;
+    return null
   }
 }
 </script>

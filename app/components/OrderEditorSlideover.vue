@@ -4,7 +4,7 @@
     side="right"
   >
     <template #content>
-      <UCard class="flex h-full flex-col">
+      <UCard class="flex h-full flex-col overflow-y-auto">
         <template #header>
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -135,7 +135,7 @@
             >
               <UTextarea
                 v-model="formState.description"
-                :rows="4"
+                :rows="3"
                 placeholder="Add context, specs, or supplier instructions"
               />
             </UFormField>
@@ -162,6 +162,15 @@
                 </template>
               </USelectMenu>
             </UFormField>
+            <div v-else>
+              <ProseCallout
+                type="tip"
+                icon="i-lucide-tag"
+                to="/docs/tags"
+              >
+                Add tags to your orders to help organize and categorize them.
+              </ProseCallout>
+            </div>
           </div>
 
           <div class="flex justify-end gap-2">
