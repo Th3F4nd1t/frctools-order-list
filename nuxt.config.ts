@@ -4,13 +4,18 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
+    '@nuxt/content',
     'nitro-cloudflare-dev',
     '@nuxtjs/plausible',
     '@nuxtjs/mdc'
   ],
 
   devtools: {
-    enabled: true
+    enabled: true,
+
+    timeline: {
+      enabled: true
+    }
   },
   app: {
     head: {
@@ -19,6 +24,16 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
+
+  content: {
+    build: {
+      markdown: {
+        toc: {
+          searchDepth: 1
+        }
+      }
+    }
+  },
   runtimeConfig: {
     resendKey: '',
     databaseUrl: '',
@@ -68,6 +83,13 @@ export default defineNuxtConfig({
             id: 'b3ed2d9914954aa59cb27389cbf19ffb'
           }
         ],
+        d1_databases: [
+          {
+            binding: 'DB',
+            database_name: 'content-orders',
+            database_id: '12c94989-e82e-41b0-97b5-b8268dcb834f'
+          }
+        ],
         routes: [
           {
             pattern: 'orders.frctools.com',
@@ -101,6 +123,10 @@ export default defineNuxtConfig({
         provider: 'local'
       }
     ]
+  },
+
+  icon: {
+    provider: 'iconify'
   },
   plausible: {
     // Prevent tracking on localhost

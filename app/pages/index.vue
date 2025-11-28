@@ -51,19 +51,20 @@ const heroLinks = computed(() => {
   if (user) {
     return [
       {
-        label: 'Open the app',
+        label: 'View orders',
         to: '/app',
         trailingIcon: 'i-lucide-arrow-right'
         // size: "xl",
-      },
-      {
-        label: 'View orders',
-        to: '/app',
-        icon: 'i-lucide-layout-dashboard'
-        // size: "xl",
         // color: "neutral",
         // variant: "subtle",
+      },
+      {
+        label: 'Read the documentation',
+        to: '/docs',
+        icon: 'i-lucide-book-open'
+        // size: "xl",
       }
+
     ]
   }
   return [
@@ -71,15 +72,16 @@ const heroLinks = computed(() => {
       label: 'Get started free',
       to: '/auth/signup',
       trailingIcon: 'i-lucide-arrow-right'
-      // size: "xl",
     },
     {
       label: 'Log in',
       to: '/auth/login',
       icon: 'i-lucide-log-in'
-      // size: "xl",
-      // color: "neutral",
-      // variant: "subtle",
+    },
+    {
+      label: 'Read the documentation',
+      to: '/docs',
+      icon: 'i-lucide-book-open'
     }
   ]
 })

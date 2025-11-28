@@ -45,9 +45,7 @@ export function useAuth() {
   const activeOrganizationId = useCookie('activeOrganizationId')
 
   const fetchSession = async () => {
-    console.log('fetching session')
     if (sessionFetching.value) {
-      console.log('already fetching session')
       return
     }
     sessionFetching.value = true

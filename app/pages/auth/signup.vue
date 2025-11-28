@@ -18,7 +18,7 @@
       <template #footer>
         By signing up, you agree to our
         <ULink
-          to="/privacy"
+          to="/docs/privacy"
           class="text-primary font-medium"
         >Privacy Policy</ULink>.
       </template>
@@ -59,8 +59,6 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-const pending = ref(false)
-
 const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   const { data, error } = await signUp.email({
@@ -74,7 +72,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       description: 'You have successfully signed up!',
       color: 'success'
     })
-
+    await useAuth().fetchSession()
     await navigateTo(redirectTarget.value)
   }
 
