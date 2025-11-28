@@ -59,8 +59,6 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-const pending = ref(false)
-
 const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   const { data, error } = await signUp.email({

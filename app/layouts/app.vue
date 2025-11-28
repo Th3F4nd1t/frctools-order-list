@@ -25,14 +25,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onServerPrefetch } from 'vue'
+import { computed } from 'vue'
 
 const auth = useAuth()
-const { organization, fetchCurrentOrganization } = useOrgs()
-
-const organizationId = computed(
-  () => auth.session.value?.activeOrganizationId ?? null
-)
+const { organization } = useOrgs()
 
 const hasOrganization = computed(() => {
   if (!auth.user.value || !auth.session.value) return false

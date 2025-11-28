@@ -20,53 +20,55 @@ useSeoMeta({
 </script>
 
 <template>
-  <UHeader>
-    <template #left>
-      <NuxtLink
-        class="font-bold font-display text-3xl text-blue-950 dark:text-white flex justify-center items-center gap-2"
-        to="/"
-      >FRCTools <span class="md:inline hidden">Orders</span></NuxtLink>
-    </template>
+  <div>
+    <UHeader>
+      <template #left>
+        <NuxtLink
+          class="font-bold font-display text-3xl text-blue-950 dark:text-white flex justify-center items-center gap-2"
+          to="/"
+        >FRCTools <span class="md:inline hidden">Orders</span></NuxtLink>
+      </template>
 
-    <template #right>
-      <div class="flex items-center gap-2">
-        <ProfileMenu />
-        <UColorModeButton />
-      </div>
-    </template>
-  </UHeader>
+      <template #right>
+        <div class="flex items-center gap-2">
+          <ProfileMenu />
+          <UColorModeButton />
+        </div>
+      </template>
+    </UHeader>
 
-  <UMain>
-    <slot />
-  </UMain>
+    <UMain>
+      <slot />
+    </UMain>
 
-  <USeparator />
+    <USeparator />
 
-  <UFooter>
-    <template #left>
-      <p class="text-sm text-muted">
-        Built by Graham • © {{ new Date().getFullYear() }}
-      </p>
-    </template>
+    <UFooter>
+      <template #left>
+        <p class="text-sm text-muted">
+          Built by Graham • © {{ new Date().getFullYear() }}
+        </p>
+      </template>
 
-    <template #right>
-      <UButton
-        to="/docs"
-        icon="i-lucide-book-open"
-        aria-label="Documentation"
-        color="neutral"
-        variant="ghost"
-      >
-        Documentation
-      </UButton>
-      <UButton
-        to="https://github.com/frctools/order-list"
-        target="_blank"
-        icon="i-simple-icons-github"
-        aria-label="GitHub"
-        color="neutral"
-        variant="ghost"
-      />
-    </template>
-  </UFooter>
+      <template #right>
+        <UButton
+          to="/docs"
+          icon="i-lucide-book-open"
+          aria-label="Documentation"
+          color="neutral"
+          variant="ghost"
+        >
+          Documentation
+        </UButton>
+        <UButton
+          to="https://github.com/frctools/order-list"
+          target="_blank"
+          icon="i-simple-icons-github"
+          aria-label="GitHub"
+          color="neutral"
+          variant="ghost"
+        />
+      </template>
+    </UFooter>
+  </div>
 </template>

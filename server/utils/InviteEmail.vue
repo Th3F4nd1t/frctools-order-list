@@ -7,7 +7,6 @@ import {
   Hr,
   Html,
   Img,
-  Link,
   Preview,
   Section,
   Text
@@ -19,9 +18,6 @@ defineProps({
   inviteLink: String
 })
 
-const baseUrl = process.env.NODE_ENV === 'production'
-  ? `https://app.lhswriting.center`
-  : '/static'
 const main = {
   backgroundColor: '#f6f9fc',
   fontFamily:
@@ -60,10 +56,6 @@ const h1 = {
   fontWeight: 'bold' as const,
   lineHeight: '44px',
   textAlign: 'center' as const
-}
-
-const anchor = {
-  color: '#556cd6'
 }
 
 const button = {
