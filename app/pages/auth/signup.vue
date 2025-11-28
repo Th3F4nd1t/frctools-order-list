@@ -18,7 +18,7 @@
       <template #footer>
         By signing up, you agree to our
         <ULink
-          to="/privacy"
+          to="/docs/privacy"
           class="text-primary font-medium"
         >Privacy Policy</ULink>.
       </template>
