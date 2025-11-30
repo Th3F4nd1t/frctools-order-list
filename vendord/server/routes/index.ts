@@ -254,7 +254,7 @@ export default eventHandler(async (event) => {
 
       const result = {
         vendor,
-        ...productData
+        ...(productData.product)
       }
 
       await db
