@@ -13,6 +13,7 @@ const { data: products, status } = await useFetch('/api/vendors/search', {
       id: item.id,
       label: item.title,
       description: item.description.replace(/<[^>]*>?/gm, ''),
+      suffix: item.vendorName,
       avatar: { src: item.image },
       price: item.price,
       currency: item.currency,
