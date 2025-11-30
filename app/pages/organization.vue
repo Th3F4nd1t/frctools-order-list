@@ -529,6 +529,45 @@
               </div>
             </UCard>
           </div>
+
+          <UCard v-if="canDeleteOrganization">
+            <template #header>
+              <div class="flex items-center gap-2">
+                <UIcon
+                  name="i-lucide-alert-triangle"
+                  class="h-5 w-5 text-red-500"
+                />
+                <h2
+                  class="text-lg font-semibold text-red-600 dark:text-red-400"
+                >
+                  Danger Zone
+                </h2>
+              </div>
+            </template>
+
+            <div class="space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-gray-100">
+                    Delete this organization
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    Once you delete an organization, there is no going back. All
+                    orders, tags, and members will be permanently removed.
+                  </p>
+                </div>
+                <UButton
+                  color="error"
+                  variant="solid"
+                  icon="i-lucide-trash-2"
+                  :loading="isDeletingOrganization"
+                  @click="handleDeleteOrganization"
+                >
+                  Delete organization
+                </UButton>
+              </div>
+            </div>
+          </UCard>
         </div>
       </ClientOnly>
     </UContainer>
@@ -552,8 +591,12 @@ const toast = useToast()
 
 const activeMemberQuery = auth.client.useActiveMember()
 
-const { organization: activeOrganization, fetchCurrentOrganization }
-  = useOrgs()
+const {
+  organization: activeOrganization,
+  fetchCurrentOrganization,
+  deleteTeam,
+  fetchOrganizations
+} = useOrgs()
 
 onServerPrefetch(async () => {
   await fetchCurrentOrganization()
@@ -687,6 +730,13 @@ const canManageMembers = computed(() => {
   const roles = extractRoles(activeMember.value?.role)
   return roles.includes('owner') || roles.includes('admin')
 })
+
+const canDeleteOrganization = computed(() => {
+  const roles = extractRoles(activeMember.value?.role)
+  return roles.includes('owner')
+})
+
+const isDeletingOrganization = ref(false)
 
 const isRefreshing = computed(
   () => membersLoading.value || invitationsLoading.value
@@ -1063,6 +1113,38 @@ async function deleteTag(tag: OrganizationTag) {
     })
   } finally {
     tagLoading.remove(tag.id)
+  }
+}
+
+async function handleDeleteOrganization() {
+  if (!activeOrganization.value) return
+  if (typeof window !== 'undefined') {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${activeOrganization.value.name}"? This action cannot be undone.`
+    )
+    if (!confirmed) return
+  }
+  isDeletingOrganization.value = true
+  try {
+    await deleteTeam(activeOrganization.value.id, { showToast: false })
+    toast.add({
+      title: 'Organization deleted',
+      description:
+        'The organization and all its data have been permanently removed.',
+      color: 'success',
+      icon: 'i-lucide-trash-2'
+    })
+    await fetchOrganizations()
+    await navigateTo('/app')
+  } catch (err) {
+    toast.add({
+      title: 'Unable to delete organization',
+      description: extractErrorMessage(err),
+      color: 'error',
+      icon: 'i-lucide-alert-triangle'
+    })
+  } finally {
+    isDeletingOrganization.value = false
   }
 }
 
