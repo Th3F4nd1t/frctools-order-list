@@ -437,9 +437,8 @@ export default eventHandler(async (event) => {
 
     const result = {
       vendor,
-      productData: {
-        product: unified
-      }
+      ...unified
+      
     }
 
     await db
