@@ -254,20 +254,20 @@ export default eventHandler(async (event) => {
 
       const result = {
         vendor,
-        ...(productData.product)
+        productData
       }
 
       await db
         .insert(productCache)
         .values({
           id: productId,
-          productJson: JSON.stringify(result),
+          productJson: JSON.stringify(productData.product),
           vendorId: vendor.id
         })
         .onConflictDoUpdate({
           target: productCache.id,
           set: {
-            productJson: JSON.stringify(result),
+            productJson: JSON.stringify(productData.product),
             updatedAt: new Date()
           }
         })
@@ -437,8 +437,7 @@ export default eventHandler(async (event) => {
 
     const result = {
       vendor,
-      ...unified
-      
+      productData: { product: unified }
     }
 
     await db
