@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import {
-  computed,
-  reactive,
-  ref,
-  watch,
-  onMounted
-} from 'vue'
+import { computed, reactive, ref, watch, onMounted } from 'vue'
 import { z } from 'zod'
 import type { DropdownMenuItem, FormSubmitEvent } from '#ui/types'
 import { createTeamSchema } from '~/composables/organizations'
@@ -367,9 +361,13 @@ async function handleInviteMember(event: FormSubmitEvent<InviteMemberForm>) {
               name="role"
               help="Roles control what members can do."
             >
-              <UInput
+              <USelect
                 v-model="inviteMemberState.role"
-                placeholder="member"
+                :items="[
+                  { label: 'Member', value: 'member' },
+                  { label: 'Admin', value: 'admin' }
+                ]"
+                placeholder="Select role"
               />
             </UFormField>
 
