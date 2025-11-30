@@ -1,15 +1,36 @@
 import { z } from 'zod'
 import { useDB } from '../../../server/utils/db'
-import { vendors } from '../../../server/utils/schema'
+import { vendors, productCache } from '../../../server/utils/schema'
 import { eq } from 'drizzle-orm'
 import parse from '../../../server/utils/set-cookie-parser'
 import { parseHTML } from 'linkedom'
 import { createError, eventHandler, getHeaders, getQuery } from 'h3'
 import { titleCase } from 'scule'
+import {
+  bigCommerceToUnified,
+  getBigCommerceToken,
+  type BigCommerceProduct
+} from '../utils/bigcommerce'
 
 const querySchema = z.object({
   url: z.string().trim().min(1, 'URL is required').url('Enter a valid URL')
 })
+
+function generateProductId(urlObj: URL, vendorType?: string | null): string {
+  const hostname = urlObj.hostname
+
+  if (vendorType === 'shopify') {
+    const pathParts = urlObj.pathname.split('/').filter(Boolean)
+    const productIndex = pathParts.indexOf('products')
+    if (productIndex !== -1 && pathParts[productIndex + 1]) {
+      const handle = pathParts[productIndex + 1]
+      return `${hostname}:${handle}`
+    }
+  }
+
+  const cleanPath = urlObj.pathname.replace(/^\/|\/$/g, '') || '/'
+  return `${hostname}:${cleanPath}`
+}
 
 export default eventHandler(async (event) => {
   const rawQuery = getQuery(event)
@@ -29,6 +50,24 @@ export default eventHandler(async (event) => {
   const vendor = await useDB().query.vendors.findFirst({
     where: eq(vendors.hostname, urlObj.hostname)
   })
+
+  // Generate product ID and check cache
+  const productId = generateProductId(urlObj, vendor?.type)
+  const db = useDB()
+
+  const cached = await db.query.productCache.findFirst({
+    where: eq(productCache.id, productId)
+  })
+
+  if (cached) {
+    const cachedData = JSON.parse(cached.productJson)
+    return {
+      productData: { product: { ...cachedData } },
+      variantId,
+      vendor,
+      cached: true
+    }
+  }
   const requestHeaders = getHeaders(event)
   const headerOrDefault = (name: string) => {
     const lowerName = name.toLowerCase()
@@ -157,16 +196,37 @@ export default eventHandler(async (event) => {
       product.variants = variants
     }
 
-    return {
-      vendor: {
-        id: urlObj.hostname.split('.').slice(0, -1).join('.'),
-        name: titleCase(urlObj.hostname.split('.').slice(0, -1).join('.')),
-        hostname: urlObj.hostname,
-        type: 'generic'
-      },
+    const genericVendor = {
+      id: urlObj.hostname.split('.').slice(0, -1).join('.'),
+      name: titleCase(urlObj.hostname.split('.').slice(0, -1).join('.')),
+      hostname: urlObj.hostname,
+      type: 'generic' as const
+    }
+
+    const result = {
+      vendor: genericVendor,
       productData: {
         product
-      },
+      }
+    }
+
+    await db
+      .insert(productCache)
+      .values({
+        id: productId,
+        productJson: JSON.stringify(result),
+        vendorId: genericVendor.id
+      })
+      .onConflictDoUpdate({
+        target: productCache.id,
+        set: {
+          productJson: JSON.stringify(result),
+          updatedAt: new Date()
+        }
+      })
+
+    return {
+      ...result,
       variantId
     }
   }
@@ -191,14 +251,35 @@ export default eventHandler(async (event) => {
         })
       }
       const productData = await res.json()
-      return {
+
+      const result = {
         vendor,
-        productData,
+        ...productData
+      }
+
+      await db
+        .insert(productCache)
+        .values({
+          id: productId,
+          productJson: JSON.stringify(result),
+          vendorId: vendor.id
+        })
+        .onConflictDoUpdate({
+          target: productCache.id,
+          set: {
+            productJson: JSON.stringify(result),
+            updatedAt: new Date()
+          }
+        })
+
+      return {
+        ...result,
         variantId
       }
     }
   }
   if (vendor.type == 'bigcommerce') {
+    const token = await getBigCommerceToken(vendor.hostname)
     const res = await fetch(url, {
       headers: {
         'User-Agent':
@@ -212,14 +293,12 @@ export default eventHandler(async (event) => {
       })
     }
     const html = await res.text()
-    const tokenMatch = html.match(/"graphQLToken\\":\\"([^"]+)\\"/)
-    //                                     <input type="hidden" name="product_id" value="626"/>
 
     const productIdMatch = html.match(
       /<input type="hidden" name="product_id" value="(\d+)"/
     )
 
-    if (!tokenMatch || !productIdMatch) {
+    if (!token.token || !productIdMatch) {
       throw createError({
         statusCode: 500,
         statusMessage:
@@ -230,7 +309,7 @@ export default eventHandler(async (event) => {
     const cookies = parse(setCookies)
     const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ')
 
-    const STOREFRONT_TOKEN = tokenMatch[1]
+    const STOREFRONT_TOKEN = token.token
     const graphQlRes = await fetch(`https://${vendor.hostname}/graphql`, {
       method: 'POST',
       headers: {
@@ -239,10 +318,9 @@ export default eventHandler(async (event) => {
         'Cookie': cookieString
       },
       body: JSON.stringify({
-        /* graphql look for product with path */
-        query: `query paginateProducts {
+        query: `query getProduct($entityId: Int!) {
   site {
-    product(entityId: ${productIdMatch[1]}) {
+    product(entityId: $entityId) {
       entityId
       name
       path
@@ -281,27 +359,25 @@ export default eventHandler(async (event) => {
       }
       productOptions(first: 50) {
         edges {
-          node
-            {
-              entityId
-              displayName
-              isRequired
-              ... on MultipleChoiceOption {
-                isVariantOption
-                displayStyle
-                values {
-                  edges {
-                    node {
-                      entityId
-                      label
-                    }
+          node {
+            entityId
+            displayName
+            isRequired
+            ... on MultipleChoiceOption {
+              isVariantOption
+              displayStyle
+              values {
+                edges {
+                  node {
+                    entityId
+                    label
                   }
                 }
               }
             }
           }
         }
-
+      }
       variants(first: 50) {
         edges {
           node {
@@ -312,16 +388,15 @@ export default eventHandler(async (event) => {
             mpn
             prices {
               price {
-                  value
+                value
               }
             }
             productOptions(first: 5) {
               edges {
                 node {
-                entityId
-                displayName
-                isRequired
-
+                  entityId
+                  displayName
+                  isRequired
                   ... on MultipleChoiceOption {
                     isVariantOption
                     displayStyle
@@ -342,41 +417,48 @@ export default eventHandler(async (event) => {
       }
     }
   }
-}
-`,
-
+}`,
         variables: {
-          path: urlObj.pathname
+          entityId: parseInt(productIdMatch[1], 10)
         }
       })
     })
     const graphQlData = await graphQlRes.json()
 
-    if (!graphQlRes.ok) {
+    if (!graphQlRes.ok || !graphQlData.data?.site?.product) {
+      console.log(graphQlData)
       throw createError({
         statusCode: 404,
         statusMessage: 'Product not found on vendor site'
       })
     }
-    const p = graphQlData.data.site.product
+    const p = graphQlData.data.site.product as BigCommerceProduct
+    const unified = bigCommerceToUnified(p)
 
-    return {
+    const result = {
       vendor,
       productData: {
-        product: {
-          title: p.name,
-          handle: p.path,
-          price: p.prices.basePrice.value,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          variants: p.variants.edges?.map((edge: any) => ({
-            price: edge.node.prices.price.value,
-            id: edge.node.sku,
-            title:
-              edge?.node.productOptions.edges[0]?.node.values.edges[0]?.node
-                .label
-          }))
+        product: unified
+      }
+    }
+
+    await db
+      .insert(productCache)
+      .values({
+        id: productId,
+        productJson: JSON.stringify(result),
+        vendorId: vendor.id
+      })
+      .onConflictDoUpdate({
+        target: productCache.id,
+        set: {
+          productJson: JSON.stringify(result),
+          updatedAt: new Date()
         }
-      },
+      })
+
+    return {
+      ...result,
       variantId
     }
   }
@@ -419,21 +501,40 @@ export default eventHandler(async (event) => {
         : '00')
     )
 
-    return {
+    const result = {
       vendor,
       productData: {
         product: {
           title,
           variants: [
             {
-              id: variantId || 'default',
+              id: 'default',
               title: 'Default',
               price
             }
           ],
           price
         }
-      },
+      }
+    }
+
+    await db
+      .insert(productCache)
+      .values({
+        id: productId,
+        productJson: JSON.stringify(result),
+        vendorId: vendor.id
+      })
+      .onConflictDoUpdate({
+        target: productCache.id,
+        set: {
+          productJson: JSON.stringify(result),
+          updatedAt: new Date()
+        }
+      })
+
+    return {
+      ...result,
       variantId
     }
   }

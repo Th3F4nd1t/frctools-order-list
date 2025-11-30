@@ -95,3 +95,20 @@ export const orderTagsRelations = relations(orderTags, ({ one }) => ({
 export const ordersRelations = relations(orders, ({ many }) => ({
   orderTags: many(orderTags)
 }))
+
+export const productCache = pgTable('product_cache', {
+  id: text('id').primaryKey(),
+  productJson: text('product_json').notNull(),
+  vendorId: text('vendor_id').notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull()
+})
+
+export const productCacheRelations = relations(productCache, ({ one }) => ({
+  vendor: one(vendors, {
+    fields: [productCache.vendorId],
+    references: [vendors.id]
+  })
+}))

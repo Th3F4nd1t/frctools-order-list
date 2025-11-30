@@ -24,6 +24,7 @@
           @submit="handleSubmit"
         >
           <div class="grid flex-1 gap-4">
+            <SearchProduct @select="formState.externalUrl = $event" />
             <UFormField
               name="externalUrl"
               label="External link"
@@ -86,7 +87,7 @@
               </UFormField>
             </div>
 
-            <div class="grid gap-4 md:grid-cols-1">
+            <div class="grid gap-4 md:grid-cols-2">
               <UFormField
                 name="vendorId"
                 label="Vendor"

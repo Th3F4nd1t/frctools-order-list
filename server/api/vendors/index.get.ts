@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!url) {
     throw createError({ statusCode: 400, statusMessage: 'URL is required' })
   }
-  const fetchUrl = new URL('http://localhost:3434')
+  const fetchUrl = new URL(!import.meta.dev ? 'http://localhost:3434' : 'http://localhost:3001')
   fetchUrl.searchParams.set('url', url)
 
   return fetchFn(fetchUrl.toString(), { headers: getHeaders(event) })

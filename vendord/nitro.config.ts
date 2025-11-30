@@ -4,5 +4,11 @@ import { defineNitroConfig } from 'nitropack/config'
 export default defineNitroConfig({
   compatibilityDate: 'latest',
   srcDir: 'server',
-  imports: false
+  imports: false,
+  experimental: {
+    tasks: true
+  },
+  scheduledTasks: {
+    '0 0 * * *': 'scrape'
+  }
 })

@@ -78,6 +78,13 @@
       "when": 1764202319388,
       "tag": "0010_wakeful_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1764521807403,
+      "tag": "0011_boring_starbolt",
+      "breakpoints": true
     }
   ]
 }
