@@ -27,6 +27,15 @@ useSeoMeta({
           class="font-bold font-display text-3xl text-blue-950 dark:text-white flex justify-center items-center gap-2"
           to="/"
         >FRCTools <span class="md:inline hidden">Orders</span></NuxtLink>
+        <UButton
+          to="/search"
+          icon="i-lucide-search"
+          variant="ghost"
+          color="neutral"
+          class="ml-4"
+        >
+          <span class="hidden md:block">Search Parts</span>
+        </UButton>
       </template>
 
       <template #right>

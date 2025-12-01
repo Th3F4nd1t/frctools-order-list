@@ -64,7 +64,6 @@ const heroLinks = computed(() => {
         icon: 'i-lucide-book-open'
         // size: "xl",
       }
-
     ]
   }
   return [
@@ -77,6 +76,11 @@ const heroLinks = computed(() => {
       label: 'Log in',
       to: '/auth/login',
       icon: 'i-lucide-log-in'
+    },
+    {
+      label: 'Search parts',
+      to: '/search',
+      icon: 'i-lucide-search'
     },
     {
       label: 'Read the documentation',

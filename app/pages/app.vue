@@ -361,7 +361,12 @@
         <div class="mb-6 flex items-center justify-between gap-4">
           <div>
             <h2 class="text-lg font-medium text-gray-900 dark:text-white">
-              Total {{ statusFilter ? statusLookup[statusFilter]?.pastTense : "spent and requested" }}
+              Total
+              {{
+                statusFilter
+                  ? statusLookup[statusFilter]?.pastTense
+                  : "spent and requested"
+              }}
             </h2>
             <p class="text-2xl font-semibold">
               {{ formatCurrencyFromCents(totalSpentCents) ?? "$0.00" }}
@@ -547,6 +552,7 @@
       v-model:open="isEditorOpen"
       :mode="editorMode"
       :initial-order="editorOrder"
+      :initial-url="editorInitialUrl"
       :loading="isEditorSubmitting"
       :available-tags="availableTags"
       @submit="handleEditorSubmit"
@@ -556,7 +562,7 @@
 
 <script setup lang="ts">
 import { TinyColor } from '@ctrl/tinycolor'
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watch, watchEffect, onMounted } from 'vue'
 import type { TableColumn } from '#ui/types'
 import type {
   Order,
@@ -569,6 +575,8 @@ definePageMeta({
   layout: 'app'
 })
 
+const route = useRoute()
+const router = useRouter()
 const auth = useAuth()
 const orgs = useOrgs()
 
@@ -835,11 +843,13 @@ const deletingIds = ref<string[]>([])
 const isEditorOpen = ref(false)
 const editorMode = ref<'create' | 'edit'>('create')
 const editorOrder = ref<Order | null>(null)
+const editorInitialUrl = ref<string | null>(null)
 const isEditorSubmitting = ref(false)
 
-function openCreateEditor() {
+function openCreateEditor(initialUrl?: string) {
   editorMode.value = 'create'
   editorOrder.value = null
+  editorInitialUrl.value = initialUrl ?? null
   isEditorSubmitting.value = false
   isEditorOpen.value = true
 }
@@ -847,9 +857,21 @@ function openCreateEditor() {
 function openEditEditor(order: Order) {
   editorMode.value = 'edit'
   editorOrder.value = { ...order }
+  editorInitialUrl.value = null
   isEditorSubmitting.value = false
   isEditorOpen.value = true
 }
+
+// Handle 'add' query parameter to open editor with pre-filled URL
+onMounted(() => {
+  const addUrl = route.query.add
+  if (addUrl && typeof addUrl === 'string') {
+    // Clear the query parameter from URL
+    router.replace({ query: { ...route.query, add: undefined } })
+    // Open editor with the URL
+    openCreateEditor(addUrl)
+  }
+})
 
 type ErrorWithStatusMessage = {
   data?: {

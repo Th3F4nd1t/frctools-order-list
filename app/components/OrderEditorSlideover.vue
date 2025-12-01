@@ -211,6 +211,7 @@ const props = defineProps<{
   mode: 'create' | 'edit'
   loading?: boolean
   initialOrder?: Order | null
+  initialUrl?: string | null
   availableTags?: Tag[]
 }>()
 
@@ -439,7 +440,7 @@ function initializeFormState() {
 }
 
 function resetFormState() {
-  formState.externalUrl = ''
+  formState.externalUrl = props.initialUrl ?? ''
   formState.partName = ''
   formState.quantity = 1
   formState.unitPrice = ''
