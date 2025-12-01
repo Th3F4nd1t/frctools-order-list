@@ -31,6 +31,24 @@ export interface OrganizationMetadata {
 }
 
 /**
+ * Parse organization metadata from string or object format
+ */
+export function parseOrganizationMetadata(metadata: unknown): Record<string, unknown> {
+  if (!metadata) return {}
+  if (typeof metadata === 'string') {
+    try {
+      return JSON.parse(metadata)
+    } catch {
+      return {}
+    }
+  }
+  if (typeof metadata === 'object') {
+    return metadata as Record<string, unknown>
+  }
+  return {}
+}
+
+/**
  * Composable for getting and formatting currency based on the organization settings.
  * Returns USD as default if organization has no currency set.
  */
@@ -40,24 +58,14 @@ export function useOrganizationCurrency() {
   const currency = computed<CurrencyCode>(() => {
     if (!organization.value) return DEFAULT_CURRENCY
 
-    // Parse metadata if it's a string
-    let metadata: OrganizationMetadata | null = null
-    if (typeof organization.value.metadata === 'string') {
-      try {
-        metadata = JSON.parse(organization.value.metadata) as OrganizationMetadata
-      } catch {
-        return DEFAULT_CURRENCY
-      }
-    } else if (organization.value.metadata && typeof organization.value.metadata === 'object') {
-      metadata = organization.value.metadata as OrganizationMetadata
-    }
-
+    const metadata = parseOrganizationMetadata(organization.value.metadata) as OrganizationMetadata
     return metadata?.currency ?? DEFAULT_CURRENCY
   })
 
   const currencyInfo = computed(() => {
+    const defaultInfo = SUPPORTED_CURRENCIES.find(c => c.code === DEFAULT_CURRENCY)!
     return SUPPORTED_CURRENCIES.find(c => c.code === currency.value)
-      ?? SUPPORTED_CURRENCIES[0]
+      ?? defaultInfo
   })
 
   /**

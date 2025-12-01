@@ -642,7 +642,8 @@ import { z } from 'zod'
 import type { FormSubmitEvent, TableColumn } from '#ui/types'
 import {
   SUPPORTED_CURRENCIES,
-  type CurrencyCode
+  type CurrencyCode,
+  parseOrganizationMetadata
 } from '~/composables/currency'
 
 const auth = useAuth()
@@ -740,19 +741,8 @@ async function saveCurrency() {
 
   isSavingCurrency.value = true
   try {
-    // Parse existing metadata
-    let existingMetadata: Record<string, unknown> = {}
-    if (activeOrganization.value.metadata) {
-      if (typeof activeOrganization.value.metadata === 'string') {
-        try {
-          existingMetadata = JSON.parse(activeOrganization.value.metadata)
-        } catch {
-          existingMetadata = {}
-        }
-      } else if (typeof activeOrganization.value.metadata === 'object') {
-        existingMetadata = activeOrganization.value.metadata as Record<string, unknown>
-      }
-    }
+    // Parse existing metadata using shared utility
+    const existingMetadata = parseOrganizationMetadata(activeOrganization.value.metadata)
 
     // Update with new currency
     const newMetadata = {
@@ -771,7 +761,7 @@ async function saveCurrency() {
       }
     })
 
-    if (!response) throw new Error('Failed to update organization')
+    if (!response) throw new Error('Failed to update organization currency setting')
 
     toast.add({
       title: 'Currency updated',
