@@ -580,6 +580,11 @@ const router = useRouter()
 const auth = useAuth()
 const orgs = useOrgs()
 
+const {
+  currency: organizationCurrency,
+  formatCurrencyFromCents
+} = useOrganizationCurrency()
+
 const toast = useToast()
 
 const statuses = [
@@ -685,7 +690,7 @@ type CsvColumn = {
   getValue: (row: OrderTableRow) => string | number | null | undefined
 }
 
-const csvExportColumns: CsvColumn[] = [
+const csvExportColumns = computed<CsvColumn[]>(() => [
   { label: 'Part', getValue: row => row.partName },
   { label: 'Description', getValue: row => row.description ?? '' },
   {
@@ -695,7 +700,7 @@ const csvExportColumns: CsvColumn[] = [
   },
   { label: 'Quantity', getValue: row => row.quantity ?? '' },
   {
-    label: 'Unit Price (USD)',
+    label: `Unit Price (${organizationCurrency.value})`,
     getValue: row =>
       row.unitPriceCents === undefined || row.unitPriceCents === null
         ? ''
@@ -713,7 +718,7 @@ const csvExportColumns: CsvColumn[] = [
   { label: 'Arrived At', getValue: row => row.arrivedAt ?? '' },
   { label: 'Updated At', getValue: row => row.updatedAt ?? '' },
   { label: 'External URL', getValue: row => row.externalUrl ?? '' }
-]
+])
 
 const {
   data: ordersData,
@@ -1117,9 +1122,10 @@ function escapeCsvValue(value: string | number | null | undefined) {
 }
 
 function buildCsvContent(rows: OrderTableRow[]) {
-  const header = csvExportColumns.map(column => column.label).join(',')
+  const columns = csvExportColumns.value
+  const header = columns.map(column => column.label).join(',')
   const dataLines = rows.map(row =>
-    csvExportColumns
+    columns
       .map(column => escapeCsvValue(column.getValue(row)))
       .join(',')
   )
@@ -1170,19 +1176,6 @@ function formatDate(value: string | null | undefined) {
     }).format(new Date(value))
   } catch {
     return null
-  }
-}
-
-function formatCurrencyFromCents(value?: number | null) {
-  if (value === undefined || value === null) return null
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(value / 100)
-  } catch {
-    return `${(value / 100).toFixed(2)}`
   }
 }
 

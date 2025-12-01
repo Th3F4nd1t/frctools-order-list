@@ -184,6 +184,61 @@
           />
 
           <div
+            v-if="activeTab === 'general'"
+            class="space-y-4"
+          >
+            <UCard>
+              <template #header>
+                <div>
+                  <h2
+                    class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                  >
+                    Currency
+                  </h2>
+                  <p class="text-sm text-gray-500">
+                    Set the default currency for price inputs and display across
+                    your organization.
+                  </p>
+                </div>
+              </template>
+
+              <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                <UFormField
+                  label="Organization currency"
+                  class="flex-1 w-full sm:max-w-xs"
+                >
+                  <USelectMenu
+                    v-model="selectedCurrency"
+                    :items="currencyOptions"
+                    value-key="value"
+                    searchable
+                    placeholder="Select currency"
+                    class="w-full"
+                    size="xl"
+                  />
+                </UFormField>
+
+                <UButton
+                  :disabled="selectedCurrency === organizationCurrency"
+                  :loading="isSavingCurrency"
+                  icon="i-lucide-save"
+                  @click="saveCurrency"
+                >
+                  Save currency
+                </UButton>
+              </div>
+
+              <p
+                v-if="currencyInfo"
+                class="mt-4 text-sm text-gray-500"
+              >
+                Current currency: {{ currencyInfo.code }} ({{ currencyInfo.symbol }})
+                - {{ currencyInfo.name }}
+              </p>
+            </UCard>
+          </div>
+
+          <div
             v-if="activeTab === 'members'"
             class="space-y-4"
           >
@@ -585,6 +640,11 @@ import {
 } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent, TableColumn } from '#ui/types'
+import {
+  SUPPORTED_CURRENCIES,
+  type CurrencyCode,
+  parseOrganizationMetadata
+} from '~/composables/currency'
 
 const auth = useAuth()
 const toast = useToast()
@@ -624,7 +684,7 @@ const membersLoading = ref(false)
 const invitationsLoading = ref(false)
 const membersError = ref<string | null>(null)
 const invitationsError = ref<string | null>(null)
-const activeTab = ref<'members' | 'invitations' | 'tags'>('members')
+const activeTab = ref<'general' | 'members' | 'invitations' | 'tags'>('general')
 
 const updatingMemberIds = ref(new Set<string>())
 const removingMemberIds = ref(new Set<string>())
@@ -650,6 +710,82 @@ function openCreateTagEditor() {
   isTagSlideoverOpen.value = true
 }
 
+// Currency state
+const {
+  currency: organizationCurrency,
+  currencyInfo
+} = useOrganizationCurrency()
+
+const selectedCurrency = ref<CurrencyCode>(organizationCurrency.value)
+const isSavingCurrency = ref(false)
+
+// Watch for organization currency changes
+watch(
+  organizationCurrency,
+  (newCurrency) => {
+    selectedCurrency.value = newCurrency
+  },
+  { immediate: true }
+)
+
+const currencyOptions = computed(() =>
+  SUPPORTED_CURRENCIES.map(c => ({
+    label: `${c.code} - ${c.name}`,
+    value: c.code
+  }))
+)
+
+async function saveCurrency() {
+  if (!activeOrganization.value) return
+  if (selectedCurrency.value === organizationCurrency.value) return
+
+  isSavingCurrency.value = true
+  try {
+    // Parse existing metadata using shared utility
+    const existingMetadata = parseOrganizationMetadata(activeOrganization.value.metadata)
+
+    // Update with new currency
+    const newMetadata = {
+      ...existingMetadata,
+      currency: selectedCurrency.value
+    }
+
+    // Use $fetch to call the better-auth organization update endpoint
+    const response = await $fetch('/api/auth/organization/update', {
+      method: 'POST',
+      body: {
+        data: {
+          metadata: newMetadata
+        },
+        organizationId: activeOrganization.value.id
+      }
+    })
+
+    if (!response) throw new Error('Failed to update organization currency setting')
+
+    toast.add({
+      title: 'Currency updated',
+      description: `Organization currency set to ${selectedCurrency.value}`,
+      color: 'success',
+      icon: 'i-lucide-check-circle'
+    })
+
+    // Refresh the organization to get updated metadata
+    await fetchCurrentOrganization()
+  } catch (err) {
+    toast.add({
+      title: 'Unable to update currency',
+      description: extractErrorMessage(err),
+      color: 'error',
+      icon: 'i-lucide-alert-triangle'
+    })
+    // Reset to current value on error
+    selectedCurrency.value = organizationCurrency.value
+  } finally {
+    isSavingCurrency.value = false
+  }
+}
+
 const inviteMemberSchema = z.object({
   email: z.string().email('Enter a valid email address'),
   role: z.string().min(1, 'Role is required'),
@@ -665,6 +801,7 @@ const inviteFormState = reactive<InviteForm>({
 })
 
 const tabItems = [
+  { label: 'General', value: 'general', icon: 'i-lucide-settings' },
   { label: 'Members', value: 'members', icon: 'i-lucide-users' },
   { label: 'Invitations', value: 'invitations', icon: 'i-lucide-mail' },
   { label: 'Tags', value: 'tags', icon: 'i-lucide-tags' }

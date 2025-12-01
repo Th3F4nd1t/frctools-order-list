@@ -75,7 +75,7 @@
               </UFormField>
               <UFormField
                 name="unitPrice"
-                label="Unit price (USD)"
+                :label="unitPriceLabel"
               >
                 <UInput
                   v-model="formState.unitPrice"
@@ -207,6 +207,8 @@ import type {
   Tag
 } from '~/types/orders'
 
+const { currency: organizationCurrency, formatCurrency } = useOrganizationCurrency()
+
 const props = defineProps<{
   mode: 'create' | 'edit'
   loading?: boolean
@@ -220,6 +222,8 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { default: false })
+
+const unitPriceLabel = computed(() => `Unit price (${organizationCurrency.value})`)
 
 const orderFormSchema = z.object({
   partName: z.string().trim().min(1, 'Part name is required'),
@@ -481,15 +485,7 @@ function formatVariantPriceLabel(price?: string | null) {
   if (!price) return null
   const numeric = Number(price)
   if (Number.isNaN(numeric)) return price
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(numeric)
-  } catch {
-    return price
-  }
+  return formatCurrency(numeric) ?? price
 }
 
 interface VariantOption {
